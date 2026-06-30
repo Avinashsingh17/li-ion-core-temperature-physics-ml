@@ -1,0 +1,34 @@
+# ── Raw datasets — license-restricted, ~840 MB. Download from Mendeley (see README); never commit. ──
+LG 18650HG2 Li-ion Battery Data.zip
+data/LG/
+data/LG_HG2_Original_Dataset*/
+data/Panasonic*/
+Panasonic 18650PF Data/
+FNN_xEV_Li_ion_SOC_EstimatorScript_March_2020.mlx
+Instructions for Downloading and Running the Script.txt
+*.pptx
+# Leftover from a previous project attempt — not part of this repo
+GasPressureAccumulation_AgeingStudy/
+
+# ── Regenerable pipeline artifacts (rebuilt by running the pipeline) ──
+data/processed/
+data/labeled/
+data/ml/
+data/eda_plots/
+# Keep tracked: data/calibration/calibration_results.json (LOCKED 2026-06-18b provenance) — do NOT add it here.
+
+# ── Copyrighted source-paper PDFs — do not redistribute (the .md notes stay) ──
+*.pdf
+
+# ── Python / OS / editor ──
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code local tooling state — machine-specific, not part of the project
+.claude/

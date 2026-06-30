@@ -1,0 +1,1578 @@
+
+===== page 1 =====
+IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 21, NO. 5, SEPTEMBER 2013
+1745
+Online Parameterization of Lumped Thermal
+Dynamics in Cylindrical Lithium Ion Batteries
+for Core Temperature Estimation and
+Health Monitoring
+Xinfan Lin, Hector E. Perez, Jason B. Siegel, Anna G. Stefanopoulou, Fellow, IEEE,
+Yonghua Li, R. Dyche Anderson, Yi Ding, and Matthew P. Castanier
+Abstract—Lithium ion batteries should always be prevented
+from overheating and, hence, thermal monitoring is indispens-
+able. Since only the surface temperature of the battery can
+be measured, a thermal model is needed to estimate the core
+temperature of the battery, which can be higher and more
+critical. In this paper, an online parameter identiﬁcation scheme
+is designed for a cylindrical lithium ion battery. An adaptive
+observer of the core temperature is then designed based on
+the online parameterization methodology and the surface tem-
+perature measurement. A battery thermal model with constant
+internal resistance is explored ﬁrst. The identiﬁcation algorithm
+and the adaptive observer is validated with experiments on
+a 2.3Ah 26650 lithium iron phosphate/graphite battery. The
+methodology is later extended to address temperature-dependent
+internal resistance with nonuniform forgetting factors. The ability
+of the methodology to track the long-term variation of the
+internal resistance is beneﬁcial for battery health monitoring.
+Index Terms—Adaptive estimation, core temperature, lithium
+ion battery, state of health.
+I. INTRODUCTION
+L
+ITHIUM ion batteries have been widely considered as
+an energy storage device for hybrid electric vehicles
+(HEV), plug-in hybrid electric vehicles (PHEV), and battery
+electric vehicles (BEV). Thermal management in vehicular
+applications is a critical issue for lithium ion batteries because
+of their narrow operating temperature range. An accurate
+prediction of battery temperature is key to maintaining the
+safety, performance, and longevity of these Li-ion batteries.
+Manuscript received March 6, 2012; revised August 6, 2012; accepted
+August 17, 2012. Manuscript received in ﬁnal form August 29, 2012. Date
+of publication October 3, 2012; date of current version August 12, 2013.
+Recommended by Associate Editor S. Varigonda.
+X. Lin, H. E. Perez, J. B. Siegel, and A. G. Stefanopoulou are with
+the Department of Mechanical Engineering, University of Michigan, Ann
+Arbor, MI 48109 USA (e-mail: xﬂin@umich.edu; heperez@umich.edu;
+siegeljb@umich.edu; annastef@umich.edu).
+Y. Li and R. D. Anderson are with the Vehicle and Battery Controls
+Department, Research and Advanced Engineering, Ford Motor Company,
+Dearborn, MI 48121 USA (e-mail: yli19@ford.com; rander34@ford.com).
+Y.
+Ding
+and
+M.
+P.
+Castanier
+are
+with
+the
+U.S.
+Army
+Tank
+Automotive Research, Development, and Engineering Center (TARDEC),
+Warren,
+MI
+48397
+USA
+(e-mail:
+yi.ding8.civ@mail.mil;
+matthew.
+p.castanier.civ@mail.mil).
+Color versions of one or more of the ﬁgures in this paper are available
+online at http://ieeexplore.ieee.org.
+Digital Object Identiﬁer 10.1109/TCST.2012.2217143
+Existing high ﬁdelity thermal models can predict the
+detailed temperature distribution throughout the cell [1]–[4].
+However, these models are not suitable for onboard application
+due to their high computational intensity. Reduced order mod-
+els typically use one single temperature, the bulk (or average)
+temperature, to capture the lumped thermal dynamics of the
+cell [4]–[7]. Even though the single temperature approximation
+is computationally efﬁcient, it might lead to over-simpliﬁcation
+since the temperature in the battery core can be much higher
+than in the surface [8].
+Lumped thermal models capturing both the surface and
+the core temperatures of the cell have also been studied in
+[8] and [9]. Such simpliﬁed models are efﬁcient for onboard
+application due to their limited number of states. The accuracy
+of the model parameters is of great importance since it
+determines the accuracy of the core temperature estimation.
+Model parameters can be approximated based on the geometry
+of the battery and the volume averaging physical properties
+of its components [9], but such approximation may not be
+accurate due to the complicated layered structure of the cell
+and the interfaces between the layers. The parameters can
+also be determined by ﬁtting the model to the data obtained
+from experiments [8], involving designed input excitation and
+measurement of the battery core temperature. This laboratory-
+oriented parameterization is invaluable for determining the
+initial values of parameters. However, some of the parameters,
+such as the internal resistance, may change over the battery
+lifetime due to degradation. In this case, parameter mismatch
+leads to inaccurate temperature estimation, and thus identiﬁ-
+cation of present value of the parameters is needed.
+A recursive parameter identiﬁcation scheme is designed,
+in this paper, to automatically identify the thermal model
+parameters based on the signals commonly measured in a
+vehicle battery management system (BMS). The algorithm
+is simple enough to run on a typical automotive onboard
+controller. An adaptive observer is then designed for the
+core temperature estimation. A lumped battery model with
+constant internal resistance is investigated ﬁrst, where the least
+square algorithm is sufﬁcient for identiﬁcation. In reality, the
+internal resistance of the battery can be temperature and/or
+state of charge (SoC)-dependent [5], [10], [11] and hence time-
+varying. The pure least square algorithm may cause errors
+1063-6536 © 2012 IEEE
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 2 =====
+1746
+IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 21, NO. 5, SEPTEMBER 2013
+in the identiﬁcation if the actual parameters are nonconstant.
+Nonuniform forgetting factors are augmented to the least
+square algorithm to address the issue of time-varying internal
+resistance.
+Apart from the short-term variability due to conditions,
+such as temperature, the internal resistance of the lithium ion
+battery may also increase over its lifetime due to degradation.
+This is because the solid electrolyte interphase (SEI) may
+grow in thickness [12]–[14] and reduce the conductivity of
+the SEI. Hence, the least square algorithm with nonuniform
+forgetting factors is also applied to track the long-term growth
+of the internal resistance. The growth of the internal resistance
+can be viewed as an important indication of the state of health
+(SOH) of the battery, and used as a reference for the onboard
+BMS to extend the life of the batteries. Parameterization
+of battery model and adaptive monitoring of the battery
+voltage and SOH have been explored previously in various
+seminal papers [15]–[17], but this paper is among the ﬁrst
+to adaptively monitor the temperatures (especially the core
+temperature) of batteries and SOH from a thermal perspective.
+II. LUMPED THERMAL MODEL OF A CYLINDRICAL
+LITHIUM ION BATTERY
+The radial thermal dynamics of a cylindrical battery are
+modeled based on the classic heat transfer problem by assum-
+ing heat generation located at the core and zero heat ﬂux at
+the center, as shown in Fig. 1.
+The two-state approximation of the radially distributed
+thermal model is deﬁned as [9]
+Cc ˙Tc = I 2Re + Ts −Tc
+Rc
+(1a)
+Cs ˙Ts = T f −Ts
+Ru
+−Ts −Tc
+Rc
+(1b)
+where the two states are the surface temperature Ts and
+the core temperature Tc. The temperature variation along
+the battery height is neglected here, assuming homogeneous
+conditions.
+Heat generation is approximated as a concentrated source
+of Joule loss in the battery core, computed as the product
+of the current I squared and the internal resistance Re.
+The internal resistance Re is considered as an unknown
+parameter to be identiﬁed. This simpliﬁcation can lead to
+cycle-dependent values for lumped resistance Re,
+or even
+nonconstant resistance within a single cycle, because Re
+can vary with conditions, such as temperature, SoC and
+degradation [5], [10], [11], [13]. In subsequent sections,
+ﬁrst, Re will be identiﬁed online as a constant under a drive
+cycle, and then identiﬁcation of Re as a varying parameter
+will be addressed in Section VII. Heat generation calculated
+based on an equivalent circuit model has also been used
+for thermal model parameterization in another ongoing
+work [18].
+Heat exchange between the core and the surface is modeled
+by heat conduction over a thermal resistance, Rc which is
+a lumped parameter aggregating the conduction and contact
+thermal resistance across the compact and inhomogeneous
+materials. A convection resistance Ru is modeled between the
+Fig. 1.
+Single cell radially lumped thermal model.
+surface and the surrounding coolant to account for convective
+cooling. The value of Ru is a function of the coolant ﬂow
+rate, and in some vehicle battery systems, the coolant ﬂow
+rate is adjustable to control the battery temperature. Here,
+it is modeled as a constant as if the coolant ﬂow rate is
+ﬁxed to accommodate the maximum required cooling capacity.
+A model with the more complicated varying Ru has also been
+investigated in [19].
+The rates of temperature change of the surface and the
+core depend on their respective lumped heat capacity. The
+parameter Cc is the heat capacity of the jelly roll inside the
+cell, and Cs is related to the heat capacity of the battery casing.
+The complete parameter set for this model includes Cc, Cs,
+Re, Rc, and Ru, of which the values cannot be easily calcu-
+lated. Consider the conduction resistance Rc as an example.
+Theoretically, Rc can be calculated based on the conductivity
+and dimensions of the wound cell electrode assembly and
+the aluminum casing. However, since the rolled electrodes
+are composed by the cathode, anode, current collectors, and
+separator, it will be difﬁcult to obtain an accurate value
+for the overall conductivity. Moreover, Rc also includes the
+contact thermal resistance between the rolled electrodes and
+the casing, which involves various contact properties adding
+to the complexity of the calculation.
+Therefore, model identiﬁcation techniques are developed in
+the following section to obtain the lumped phenomenological
+values of the model parameters based on measurable inputs
+and outputs of the model.
+III. PARAMETERIZATION METHODOLOGY
+For model identiﬁcation, a parametric model
+z = θ T φ
+(2)
+is derived ﬁrst by applying Laplace transformation to the
+model, where z is the observation, θ is the parameter vector,
+and φ is the regressor [20]. Both z and φ should be measured
+or can be generated from measured signals.
+With a parametric model, various algorithms can be chosen
+for parameter identiﬁcation, such as the gradient and the least
+squares methods. The method of least squares is preferred for
+noise reduction [20].
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 3 =====
+LIN et al.: ONLINE PARAMETERIZATION OF LUMPED THERMAL DYNAMICS
+1747
+The recursive least squares algorithm is applied in an
+online fashion, as parameters are updated continuously [20]
+˙θ = P ϵφ
+m2
+(3a)
+˙P = −P φφT
+m2 P
+(3b)
+ϵ = z −θ T φ
+(3c)
+m2 = 1 + φT φ
+(3d)
+where m is a normalization factor that enhances the robustness
+of parameter identiﬁcation.
+In some cases, to make the observation z and the regressors
+φ proper (or causal), a ﬁlter (1/(s)) will have to be designed
+and applied. The parametric model will then become
+z
+ = θT φ
+.
+(4)
+The convergence and robustness of the identiﬁcation are
+guaranteed if the regressors, φ in (8), are stationary signals
+and satisfy the persistent excitation (PE) conditions [20]. The
+PE conditions are satisﬁed if there exist some time interval
+T0, and positive number α1 and α0, such that
+α1IM ≥U(t) = 1
+T0
+ t+T0
+t
+φ(τ)φT (τ)dτ ≥α0IM
+∀t ≥0
+(5)
+where IM is the identity matrix with the same dimension as
+U(t) [20]. This criteria can be used to test whether a drive
+cycle can ensure robust parameter convergence.
+IV. ONLINE PARAMETERIZATION OF THE
+BATTERY THERMAL MODEL
+In this section, the parameterization scheme described pre-
+viously is applied to the cylindrical battery thermal model in
+(1). A parametric model for identiﬁcation can be derived by
+taking the Laplace transformation of (1) and replacing the
+unmeasured Tc with measured signals I, T f, and Ts
+s2Ts −sTs,0 =
+Re
+CcCs Rc
+I 2 +
+1
+CcCs RcRu
+(T f −Ts)
++
+1
+Cs Ru
+s(T f −Ts) −
+1
+CcCs Rc
+×
+
+(Cc + Cs)sTs −CsTs,0 −CcTc,0
+
+(6)
+where Ts,0 and Tc,0 are the initial surface and core tempera-
+tures. When the initial core temperature, Tc,0, is considered to
+be the same as the initial surface temperature, Ts,0, as if the
+battery starts from thermal equilibrium, (6) becomes
+s2Ts −sTs,0 =
+Re
+CcCs Rc
+I 2 +
+1
+CcCs Rc Ru
+(T f −Ts)
+−Cc+Cs
+CcCs Rc
+(sTs −Ts,0)+
+1
+Cs Ru
+s(T f −Ts). (7)
+It is assumed here that T f is regulated as a steady output of
+the air-conditioning unit and thus sT f = 0, giving
+s2Ts −sTs,0 =
+Re
+CcCs Rc
+I 2 +
+1
+CcCs Rc Ru
+(T f −Ts)
+−
+Cc + Cs
+CcCs Rc
++
+1
+Cs Ru
+
+(sTs −Ts,0).
+(8)
+If T f is a time-varying input to the model, sT f should not
+be dropped. In this case, T f can also be used as an input
+excitation in the parametric model. A second order ﬁlter should
+be applied to the observation and the regressors in (8) to make
+them proper. The ﬁlter takes the form
+1
+(s) =
+1
+(s + λ1)(s + λ2)
+(9)
+where λ1 and λ2 are the time constants of the ﬁlter. The values
+of λ1 and λ2 can be chosen to ﬁlter the noises with frequencies
+higher than the temperature dynamics.
+For the parametric model in (8)
+Z(s) = s2Ts −sTs,0
+(s)
+(10a)
+	(s) =
+ I 2
+(s)
+T f −Ts
+(s)
+sTs −Ts,0
+(s)
+T
+(10b)
+θ = [α
+β
+γ ]T
+(10c)
+where
+α =
+Re
+CcCs Rc
+(11a)
+β =
+1
+CcCs Rc Ru
+(11b)
+γ = −
+Cc + Cs
+CcCs Rc
++
+1
+Cs Ru
+
+.
+(11c)
+For implementation in a practical system, the identiﬁcation
+algorithm is formulated along with signals z and φ in the
+time domain based on (3), or in the discrete time domain
+based on equivalent formula.
+For example, z(t), whose
+Laplace transform is (s2Ts −sTs,0/(s)), can be obtained by
+calculating the convolution of Ts(t) −Ts,0 and the inverse
+Laplace transform of (s2/(s)). In this way, calculation of
+the second order derivative of Ts, s2Ts, which can be easily
+corrupted by noises, is avoided.
+By using the parametric model in (8), only three lumped
+parameters, α, β, and γ , can be identiﬁed under the condition
+of persistent input excitation [20]. Prior knowledge of two of
+the physical parameters must be assumed so as to determine
+a set of unique solutions for the original ﬁve physical para-
+meters, Cc, Cs, Re, Rc, and Ru from α, β, and γ . Of the
+ﬁve physical parameters, the internal resistance Re may vary
+due to aging and should be identiﬁed online. The conduction
+resistance Rc is difﬁcult to estimate as explained previously.
+The convection resistance Ru will be inﬂuenced by the coolant
+ﬂow conditions around the cell depending on the packaging.
+Therefore, it is not easy to obtain prior knowledge of those
+three parameters. The heat capacities Cc and Cs, which
+depend on the thermal properties and the mass of the rolled
+electrode assembly and the casing, are relatively constant over
+lifetime. In addition, the heat capacities will only affect the
+speed of transient response of the model without having any
+impact on the steady state temperatures. Consequently, the
+heat capacities Cc and Cs are selected to be the presumed
+parameters.
+With Cc and Cs presumed and α, β, and γ identiﬁed, Re,
+Rc, and Ru can be obtained by solving the following set
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 4 =====
+1748
+IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 21, NO. 5, SEPTEMBER 2013
+(a)
+(b)
+Fig. 2.
+Instrumentation of the battery core temperature. (a) Drill press setup
+of the battery. (b) Installation of the thermocouples.
+of equations:
+β(Cc + Cs)Cs Ru2 + γ Cs Ru + 1 = 0
+(12a)
+Rc =
+1
+βCsCc Ru
+(12b)
+Re = αCcCs Rc.
+(12c)
+The quadratic equation for Ru in (12) can lead to two
+solutions, but the right one can be decided based on the coolant
+ﬂow conditions based on [21].
+The least squares algorithm in (3) can then be applied for
+parameter identiﬁcation. In [19] and [22], the methodology has
+been applied and veriﬁed by simulation with a battery thermal
+model with assumed parameters. In the following section, the
+parameterization is further validated by experiments.
+V. EXPERIMENT VALIDATION
+A. Experiment Set-Up and Measurements
+Experiments
+have
+been
+conducted
+to
+validate
+the
+designed parameterization scheme. A 2.3Ah A123 26650
+LiFePO4/graphite battery is cycled with a Bitrode cycler
+under the control of a customized testing system by A&D
+Technology. A Cincinnati Sub-Zero environmental simulation
+chamber is used to regulate the temperature of the coolant air
+ﬂow around the battery.
+T-type thermocouples are installed both on the battery
+casing to measure its surface temperature, and also inside
+the battery core to measure the core temperature. During the
+fabrication process of the 26 650 cylindrical cell, the electrode
+assembly is wound up to form a roll, leaving a cavity in the
+center. To measure the core temperature, the battery was drilled
+inside an argon-ﬁlled glove box through to its central cavity,
+where the thermocouple was inserted, as shown in Fig. 2. The
+battery was then sealed and taken out of the glove box for
+experiments.
+Inside the thermal chamber, the battery was placed in a
+designed ﬂow chamber as shown in Fig. 3, where a fan was
+mounted at one end to regulate the air ﬂow around the cell.
+The speed of the fan is controlled by pulse width modulation
+signals to change the air ﬂow rate. The ﬂow chamber is used
+to emulate the pack air cooling conditions where the coolant
+ﬂow rate is adjustable (like in [19]). A T-type thermocouple
+Fig. 3.
+Schematic diagram of the ﬂow chamber.
+is placed near the battery inside the ﬂow chamber to measure
+the air ﬂow temperature T f .
+B. PE of Input Signals
+A driving cycle, the urban assault cycle (UAC) [23], is
+applied as the current excitation to the battery in galvanostatic
+mode. The UAC was originally a velocity cycle for military
+vehicles. The current proﬁle for a battery pack of a hybrid
+military vehicle under UAC was derived in [23] by applying a
+certain power management strategy. The type of battery used
+in the experiment (LiFePO4 26650) is different from the one in
+[23], hence the UAC current cycle taken from [23] is rescaled
+for the experiments. The original 20-minute cycle is repeated
+4 times to let the battery temperature reach periodic steady
+state. The resulting scaled drive cycle current is plotted in
+Fig. 4. The normalized unit of C-rate is commonly used to
+describe the load applied to the battery and 1 C corresponds
+to the magnitude of the current that depletes the battery in
+one hour (in this case 2.3 A). The negative current indicates
+the discharge of the battery as the energy is drawn from the
+battery to drive the vehicle, and the positive current represents
+the regenerative braking during which the battery is charged.
+The discharge load is fairly evenly distributed between 1 C and
+7 C, except at around −8 C which indicates rapid acceleration.
+The charge load is mostly below 7 C and occasionally reaches
+above 10 C during drastic braking. The SoC evolution under
+this cycle is also plotted in Fig. 4, showing a decrease from
+about 50% to roughly 35%.
+The temperature of the thermal chamber is controlled at
+26 °C. The resulting battery surface temperature Ts and air
+ﬂow temperature T f are measured and recorded by the data
+acquisition system. The measured Ts and T f under the scaled
+UAC cycles are plotted in Fig. 5, which along with I are then
+used for parameter identiﬁcation.
+The criteria in (5) is then applied to check if the UAC
+cycle satisﬁes the PE condition, which requires the regressors
+to be stationary signals ﬁrst. As can be seen in Fig. 5, the
+surface temperature Ts will vary periodically after the battery
+ﬁnishes the warm-up phase at about 1000 s. Consequently, the
+regressors, which include I 2, T f −Ts, and sTs, will become
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 5 =====
+LIN et al.: ONLINE PARAMETERIZATION OF LUMPED THERMAL DYNAMICS
+1749
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+−20
+0
+20
+Current I (C rate)
+time (s)
+−10
+−5
+0
+5
+10
+15
+0
+10
+20
+Percentage (%)
+Current (C−rate)
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+35
+40
+45
+50
+55
+SOC (%)
+time (s)
+(a)
+(b)
+(c)
+Fig. 4.
+Scaled UAC current excitation. (a) Currents in time series.
+(b) Histogram of the currents. (c) SoC variation under the cycle.
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+26
+28
+30
+32
+Ts (oC)
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+25
+25.5
+26
+26.5
+27
+Tf (oC)
+time (s)
+(a)
+(b)
+Fig. 5. Measured Ts and T f under scaled UAC cycle. (a) Surface temperature
+Ts. (b) Flow temperature T f .
+stationary signals, as shown in Fig. 6. The U(t) matrix can
+then be calculated to check the PE conditions. It is noted that
+the measurements taken during the warm-up period can also
+be used for identiﬁcation, even though they are not stationary
+signals [19].
+Since the current input consists of repeated UAC cycles
+(each lasting for 1200 s), the values of U(t) only need
+to be calculated over a time interval T0
+= 1200 s for
+1000 s ≤t ≤2200 s. It is noted that in this case, U(t) is
+not a diagonal matrix, and thus its eigenvalues are calculated
+to check the PE conditions. The smallest and the largest
+eigenvalues of U(t), λmax, and λmin, are plotted in Fig. 7.
+It can be concluded from Fig. 7 that α1 in (5) can be
+found as 0.086 s−1, which is the maximum of λmax(t), and
+α0 as 2.4 × 10−4 s−1, which is the minimum of λmin(t).
+Consequently, under the UAC cycle, the regressors satisfy the
+conditions of PE. Furthermore, α0 are related to the speed
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+0
+0.5
+1
+φ1 I2/Λ
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+−0.1
+−0.05
+0
+φ2/Λ
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+−0.5
+0
+0.5
+φ3/Λ
+time (s)
+Fig. 6.
+Evolution of regressors φ in periodic steady state.
+1000
+1200
+1400
+1600
+1800
+2000
+2200
+2
+2.5
+3
+3.5
+x 10
+−4
+λmin
+1000
+1200
+1400
+1600
+1800
+2000
+2200
+0.05
+0.06
+0.07
+0.08
+0.09
+time (s)
+λmax
+(a)
+(b)
+Fig. 7.
+Evolution of the eigenvalues of U(t) in steady state. (a) Smallest
+eigenvalue. (b) Largest eigenvalue.
+of the convergence for parameter identiﬁcation. Speciﬁcally,
+when the gradient method is used, 2α−1
+0
+is the upper limits
+of the time constant of the parameter convergence [20], which
+would be
+τ ≤8333 s
+(13)
+in this case. Based on (13), the 90% settling time for the
+convergence under the gradient search algorithm is expected
+to be less than 19186 s. It is noted that 19186 s is a
+rather conservative estimation of the convergence time. In
+real applications, the convergence is usually accelerated by
+increasing the adaptive gain [20], [24].
+C. Results and Discussion
+The measured signals I, Ts, and T f in Figs. 4 and 5 are
+used for recursive least squares parameterization. The three
+parameters to be identiﬁed, Ru, Re, and Rc, are initialized with
+the initial guess values in Table I. For the heat capacity, the
+single Cp in [8] is split into Cc and Cs here representing the
+battery core and surface heat capacities, respectively. The heat
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 6 =====
+1750
+IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 21, NO. 5, SEPTEMBER 2013
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+−2
+0
+2
+4
+6
+Lumped Parameters
+α
+β
+γ
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+0
+10
+20
+30
+40
+50
+time (s)
+Parameters
+Ru (0.1KW−1)
+Rc (0.1KW−1)
+Re (mΩ)
+(a)
+(b)
+Fig. 8. Online parameter identiﬁcation results. (a) Convergence of the lumped
+parameters. (b) Convergence of the original parameters.
+TABLE I
+INITIAL GUESS AND IDENTIFICATION RESULTS OF PARAMETERS
+Parameters
+Ru(KW−1)
+Re(m)
+Rc(KW−1)
+Initial Guess
+1.5
+30
+0.5
+ID Results
+3.03
+11.4
+1.83
+capacity of the battery core, Cc, is assumed to be 67 JK−1,
+slightly smaller than Cp in [8]. The heat capacity of the
+battery surface, Cs, is assumed to be 4.5 JK−1 based on the
+dimensions of the aluminum casing of the 26 650 battery and
+the speciﬁc heat capacity of aluminum.
+The results of the recursive identiﬁcation are plotted in
+Fig. 8. It is noted that the identiﬁcation procedures are started
+after the ﬁrst 1000 s when the temperature enters periodic
+steady state. It can be seen that starting at some random
+initial values, the three parameters converge to the values
+listed in Table I. Fig. 8(a) shows the convergence of the
+lumped parameters α, β, and γ in (8), and Fig. 8(b) shows the
+convergence of the physical parameters Ru, Rc, and Re, which
+are obtained by solving (12). It is noted that the convergence
+time is within the range (less than 19 186 s ) discussed in
+Section V-B, which is strictly speaking only valid for the
+gradient method. The convergence rate is accelerated here by
+increasing the initial adaptive gain P0 [24], [25], which is the
+initial value of P(t) in (3).
+For validation purposes, the identiﬁed parameters are
+applied to (1) to estimate both the battery surface temperature
+Ts and the core temperature Tc. The estimate is then compared
+with the measurement, as plotted in Fig. 9. The estimated sur-
+face temperatures Ts match the measurement exactly, since Ts
+is directly used for identiﬁcation. It is noted that the measured
+core temperature Tc also agrees closely with the measured
+Tc (which was not used for parameterization), showing the
+capability of the parameterized model to predict the correct
+battery core temperatures. Once the parameterization scheme
+is validated, it can be run in onboard BMS to estimate the
+0
+500
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+26
+28
+30
+32
+t (s)
+Ts (oC)
+Measured Ts
+Estimated Ts
+0
+500
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+25
+30
+35
+t (s)
+Tc (oC)
+Measured Tc
+Estimated Tc
+(a)
+(b)
+Fig. 9.
+Experimental validation. (a) Estimated surface temperature Ts versus
+measured. (b) Estimated core temperature Tc versus measured.
+TABLE II
+COMPARISON OF THE IDENTIFIED PARAMETERS TO [8]
+Parameters
+Value
+Equivalence in [8]
+Value
+Rc(KW−1)
+1.83
+Rin(KW−1)
+3.2 ∼3.4
+Ru(KW−1)
+3.03
+Rout(KW−1)
+8.4 ∼9.1
+Cc(JK−1)
+67
+Cp(JK−1)
+73 ∼78
+Cs(JK−1)
+4.5
+-
+-
+core temperatures in real time without actually measuring it
+(as in the lab set-up).
+The identiﬁcation results are also compared to those in [8],
+where thermal parameters of the same battery are identiﬁed
+based on the measurement of both surface and core temper-
+atures under designed current inputs. In [8], the battery is
+modeled with a single dynamic state (the core temperature),
+and the surface temperature is related to the core temperature
+with an algebraic equation by assuming the surface heat
+capacity to be zero. In [8], the heat generation is pre-calculated
+by resistive heat dissipation (due to ohmic voltage drop) plus
+entropic heat, and in this paper, the entropic heat is ignored and
+the heat generation is accounted for by multiplying the current
+square with an identiﬁed parameter Re. It is noted that the
+entropic heat is generally small comparing to the resistive heat,
+especially in the middle SoC range here as shown in Fig. 4.
+Table II summarizes the comparison between the thermal
+parameters identiﬁed in [8] and in this paper. It can be seen
+that the identiﬁed value of the conduction resistance (Rc)
+between the core and the surface is smaller than that in [8].
+This is probably because the surface temperature in this paper
+is measured at the aluminum casing instead of at the outside
+paper cover (as in [8]), which indicates better heat conduction.
+The identiﬁed convection resistance between the surface and
+the coolant Ru is signiﬁcantly smaller than that in [8], which
+can be explained by the fact that during the experiment, the
+air ﬂow is constantly blown into the ﬂow chamber by the fan,
+which enhances the convective cooling through the coolant air.
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 7 =====
+LIN et al.: ONLINE PARAMETERIZATION OF LUMPED THERMAL DYNAMICS
+1751
+VI. ADAPTIVE BATTERY CORE
+TEMPERATURE ESTIMATION
+In controlled applications, an observer is often designed
+based on a plant model to estimate the states of a plant, espe-
+cially ones that are not measured, e.g., the core temperature Tc
+of the battery in this case. Such model-based observers can be
+categorized as either an open-loop observer or a closed-loop
+observer. For a linear system
+˙x = Ax + Bu
+(14)
+where x are the states and u are the inputs, an open-loop
+observer is simply
+˙ˆx = A ˆx + Bu
+(15)
+as the estimated states ˆx are calculated by the model solely
+based on the inputs u. For the battery thermal model speciﬁ-
+cally, we have
+x = [Tc
+Ts]T
+(16a)
+u = [I 2
+T f ]T
+(16b)
+A =
+	−
+1
+RcCc
+1
+RcCc
+1
+RcCs
+−1
+Cs
+
+1
+Rc + 1
+Ru
+
+
+(16c)
+B =
+	 Re Rc
+Cc
+0
+0
+1
+RuCs
+
+.
+(16d)
+However, the estimation by such an open-loop observer can
+often be corrupted by unknown initial conditions, and noises
+in the measurement of the inputs. To address such issues,
+a closed-loop observer, such as a Luenberger observer or a
+Kalman ﬁlter, is often designed to estimate the states based on
+the model and the feedback of some measurable outputs [26]
+˙ˆx = A ˆx + Bu + L(y −ˆy)
+(17a)
+y = Cx + Du
+(17b)
+ˆy = C ˆx + Du
+(17c)
+where y are the measured system outputs, ˆx and ˆy are
+estimated states and output, L is the observer gain, and A,
+B, C, and D are model parameters. For the battery thermal
+model, since the surface temperature Ts is measurable, we
+have
+C = [0 1]
+(18a)
+D = 0.
+(18b)
+It is noted that the difference between the measured and
+the estimated output is used as the feedback to correct
+the estimated states. Comparing with an open-loop observer,
+the closed-loop observer can accelerate the convergence of
+the estimated states to those of the real plant under unknown
+initial conditions, e.g., a Luenberger observer [26], or optimize
+the estimation by balancing the effect of unknown initial
+conditions and noises, e.g., a Kalman ﬁlter [27].
+By taking the structure of a closed-loop observer, an
+adaptive observer is then designed based on the certainty
+equivalence principle [20]
+Cc ˙ˆTc = I 2 ˆRe +
+ˆTs −ˆTc
+ˆRc
++ l1(Ts −ˆTs)
+(19a)
+Fig. 10.
+Online identiﬁcation scheme and adaptive observer structure.
+0
+500
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+26
+28
+30
+32
+Ts (oC)
+Measured
+Estimated
+0
+500
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+4500
+5000
+26
+28
+30
+32
+34
+36
+t (s)
+Tc (oC)
+Measured
+Estimated
+start of identification
+(a)
+(b)
+Fig. 11.
+Response of the closed-loop adaptive observer. (a) Adaptive
+estimation of the surface temperature versus measurement. (b) Adaptive
+estimation of the core temperature versus measurement.
+Cs ˙ˆTs = T f −ˆTs
+ˆRu
+−
+ˆTs −ˆTc
+ˆRc
++ l2(Ts −ˆTs)
+(19b)
+where ˆTs and ˆTc are the estimated surface and core tempera-
+tures, and the observer parameters ˆRe, ˆRc, and ˆRu are taken
+from the online identiﬁcation results in Section V. The block
+diagram of the adaptive observer is shown in Fig. 10.
+The
+input current I, coolant temperature T f , and the measured
+surface cell temperature Ts are fed into the parameter identiﬁer
+to estimate model parameters Ru, Re, and Rc. The adaptive
+observer uses the estimated parameters to estimate the core
+and the surface temperatures. The estimated Ts is compared
+to the measurement and the error is fed back to correct
+the core temperature and surface temperature estimation. The
+estimations for both parameters and temperatures are updated
+at each time step.
+The data in Section V are used to test the response of the
+adaptive observer, as plotted in Fig. 11. The initial estimated
+temperatures of the adaptive observer are set at 30 °C for both
+the surface and the core, whereas the correct value is 26 °C,
+and the parameters are initialized with the initial guess values
+in Table I. It can be seen from Fig. 11 that the estimated
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 8 =====
+1752
+IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 21, NO. 5, SEPTEMBER 2013
+surface temperature Ts converges to the actual values much
+faster than the core temperature Tc. The reason is that the sur-
+face temperature Ts is accessible by the adaptive observer both
+via parameter identiﬁcation and closed-loop error feedback,
+and thus the observer can adjust its estimation of Ts quickly
+based on direct reference of the measurement. But for the core
+temperature Tc, which is not measured, its estimation accuracy
+depends on the accuracy of the model parameters. Therefore,
+the convergence of Tc to the actual values will only happen
+after the identiﬁed parameters converge to the correct model
+parameters (at approximately 3000 s).
+VII. PARAMETERIZATION OF THE BATTERY THERMAL
+MODEL WITH TEMPERATURE-DEPENDENT Re
+For most lithium ion batteries, their internal resistance Re
+depends on temperature and SoC, [5], [6], [11]. In general
+cases, Re is high when the temperatures are low and when the
+SoC is close to 0% or 100%. An Arrhenius function is often
+used to describe the relationship between Re and the battery
+(core) temperature Tc, as
+Re = Re,ref exp
+Tref
+Tc
+
+(20)
+where Re,ref is the reference resistance value at a certain
+reference temperature Tref, and Tref and Tc are in K. It is noted
+that the change in resistance with respect to SoC is negligible
+in the normal vehicle battery operating range (20%−80% SoC)
+and thus is not considered here. The relationship between Re
+and Ts described by (20) is plotted in Fig. 12, by taking
+Re,ref = 0.091 m and Tref = 1543 K.
+As a result, in real application, Re will be varying as the
+temperature ﬂuctuates. Such variation cannot be neglected
+when the power demands are high and dramatically varying.
+Simulation is used in this section for illustration. Simulated
+variation of Re due to Tc ﬂuctuation under a drastic current
+cycle is shown in Fig. 13. It can be seen that the drastic current
+variation creates a 10 °C of ﬂuctuation in the battery core
+temperature Tc. The resulting variation of Re is about 20% as
+shown by the blue line in the bottom plot of Fig. 13.
+Since the least squares identiﬁcation algorithm in (3) iden-
+tiﬁes each parameter as a constant, when Re is varying, errors
+will be observed in Re identiﬁcation as shown in Fig. 13.
+This will not only introduce errors in Re estimation but might
+also affect the estimation of other parameters, and eventually
+corrupt the estimation of the core temperature Tc. To address
+such issue, a least squares algorithm with forgetting factors is
+then designed to identify Re as a time-varying parameter.
+A. Identiﬁcation Design With Forgetting Factor
+When forgetting factors are adopted, most parts of the least
+square algorithm will be the same as (3), except that
+˙P(t) = ηT P(t)η −P(t)φ(t)φT (t)
+m2(t)
+P(t)
+(21)
+where η is the forgetting factor matrix [20].
+The least square identiﬁcation algorithm tries to ﬁnd the
+optimal parameters that best ﬁt the inputs and outputs over
+0
+10
+20
+30
+40
+50
+60
+70
+5
+10
+15
+20
+25
+30
+Tc (oC)
+Re (mΩ)
+Fig. 12.
+Dependence of Re on Tc.
+0
+1000
+2000
+3000
+4000
+5000
+−20
+0
+20
+I (C−rate)
+0
+1000
+2000
+3000
+4000
+5000
+20
+40
+60
+Tc (oC)
+0
+1000
+2000
+3000
+4000
+5000
+6
+8
+10
+12
+14
+t (s)
+Re (mΩ)
+Simulated
+Identified
+(a)
+(b)
+(c)
+(b)
+Fig. 13.
+Errors in Re estimation when the temperature varies signiﬁcantly.
+(a) Drive cycle current. (b) Fluctuation of the battery core temperature.
+(c) Errors in Re identiﬁcation.
+the whole data set. A pure least square algorithm treats
+each data point as equal, no matter if it is acquired most
+recently, or obtained much earlier. However, when a forgetting
+factor is applied, the data points will be weighted differently.
+Speciﬁcally, the newly acquired data are favored over the older
+ones. In the form shown in (21), the weight of the data will
+decay exponentially with the time elapsed, and the larger the
+forgetting factor is, the faster the decay will be. Consequently,
+the least square algorithm can track the parameters when they
+are time-varying.
+The least square algorithm with forgetting factors can be
+applied to the original linear parametric model in (7). Of the
+three lumped parameters, namely α, β, and γ in (7), only α
+is related to time varying Re, and all the others are constant.
+Therefore, nonuniform forgetting factors should be adopted
+with the η matrix designed as
+η =
+⎡
+⎣
+η1 0 0
+0 0 0
+0 0 0
+⎤
+⎦
+(22)
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 9 =====
+LIN et al.: ONLINE PARAMETERIZATION OF LUMPED THERMAL DYNAMICS
+1753
+0
+1000
+2000
+3000
+4000
+5000
+0
+5
+10
+Ru (KW−1)
+Simulated
+Identified
+0
+1000
+2000
+3000
+4000
+5000
+0
+1
+2
+3
+Rc (KW−1)
+0
+1000
+2000
+3000
+4000
+5000
+0.008
+0.01
+0.012
+t (s)
+Re (mΩ)
+Fig. 14.
+Identiﬁcation of temperature-dependent internal resistance by the
+least square algorithm with nonuniform forgetting factors.
+0
+1000
+2000
+3000
+4000
+5000
+25
+30
+35
+40
+45
+Ts (oC)
+Simulated Ts
+Estimated Ts
+0
+1000
+2000
+3000
+4000
+5000
+20
+30
+40
+50
+60
+time (s)
+Tc (oC)
+Simulated Tc
+Estimated Tc
+(a)
+(b)
+Fig. 15.
+Adaptive estimation of battery with temperature-dependent internal
+resistance by forgetting factors. (a) Estimation of surface temperature Ts.
+(b) Estimation of core temperature Tc.
+where η1 is the forgetting factor associated with α (and
+hence Re).
+Simulation is conducted with η1 = 0.25, and the results of
+identiﬁcation are shown in Fig. 14. It can be seen that that
+the identiﬁed Re can follow the simulated varying Re after
+the recursive least squares online identiﬁcation with forgetting
+factors is activated at 1500 s. As shown in Fig. 15, the
+adaptive observer, taking the structure in (19) and parameters
+identiﬁed online (now Re varying as shown in the bottom
+plot of Fig. 14), can estimate the battery core temperature Tc
+accurately after the identiﬁed Re converges to the simulated
+Re at around 3700 s.
+VIII. DEGRADATION DETECTION BY MONITORING
+GROWTH IN INTERNAL RESISTANCE
+The recursive least square algorithm with forgetting factors
+can also track the long-term growth of the internal resistance,
+which can be used as an indication for the SOH of the battery.
+(a)
+(b)
+Fig. 16.
+Simulated identiﬁcation of internal resistance subject to degrada-
+tion. (a) Identiﬁcation of Re with both short-term and long-term variation.
+b) Simulated and identiﬁed cycle-average Re.
+Fig. 17.
+Adaptive estimation of battery subject to degradation.
+The growth of the internal resistance due to degradation
+is a process that occurs slowly over the battery lifetime. The
+internal resistance might increase substantially over hundreds
+of cycles or days according to [12]–[14].
+In this paper, the growth in internal resistance due to
+degradation is simulated and used to test the capability of
+the identiﬁcation algorithm to detect the slow increase of the
+resistance. The internal resistance Re, originally a function
+of the core temperature Tc, is now augmented with a term,
+which is linearly increasing over time. The drive cycle used for
+simulation is the same as shown in the upper plot of Fig. 13,
+but is repeated for 350 times and the rate of growth in internal
+resistance is set at 0.14%/cycle. Although not modeled here,
+the rate of degradation may also increase with the temperature
+according to [12]–[14].
+The results of the online identiﬁcation are shown in Fig. 16.
+It can been seen from Fig. 16 that the simulated internal
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 10 =====
+1754
+IEEE TRANSACTIONS ON CONTROL SYSTEMS TECHNOLOGY, VOL. 21, NO. 5, SEPTEMBER 2013
+resistance gradually increases over time while still subject to
+short-term variation due to the ﬂuctuation of the battery core
+temperature. The identiﬁed Re follows both the long-term and
+short-term variation of the simulated one with a small delay as
+shown in the inset of Fig. 16. In real vehicle application, since
+Re is varying all the time, it is difﬁcult to evaluate SOH by
+the instantaneous value of Re and the averaged Re might be
+a better choice instead. The mean value of Re for each UAC
+cycle is plotted in the lower half of Fig. 16. It is noted that the
+averaged Re can capture the long-term increase of the internal
+resistance and the identiﬁed value is a good estimation of the
+real one.
+The adaptive monitoring of the temperatures is also shown
+in Fig. 17. It is noted that as the internal resistance of the
+battery grows, the temperatures will also be elevated due to the
+increase of the heat generated. Since the observer is updated
+with the identiﬁed Re in real time, it estimates both the core
+and the surface temperatures with high accuracy.
+IX. CONCLUSION
+The core temperature of a lithium ion battery, which
+is usually not measurable, is of great importance to the
+onboard BMS, especially when the batteries are subject to
+drive cycles with high C-rate. The core temperature can
+be estimated by a two states thermal model, and the para-
+meters of the models are critical for the accuracy of the
+estimation. In this paper, an online parameter identiﬁca-
+tion scheme based on least square algorithm was designed
+for a cylindrical lithium ion battery thermal model. The
+online identiﬁcation scheme can automatically identify model
+parameters based on the commonly available onboard sig-
+nals. The updated parameters were then used to predict the
+unmeasured core temperature using a model-based observer
+as shown with an A123 26 650 lithium iron phosphate
+battery.
+When the internal resistance of the battery is temperature-
+dependent, which is a more realistic situation, the least square
+algorithm was augmented with nonuniform forgetting factors.
+The algorithm with forgetting factors cannot only track the
+time-varying internal resistance, but also guarantee unbiased
+identiﬁcation of the remaining constant parameters. The online
+parameterization also shows the capability to track the long-
+term variation of the internal resistance due to aging or degra-
+dation/abuse. The growth in internal resistance can be used
+for the SOH monitoring of the batteries. The methodology
+developed has been veriﬁed with simulations and is to be
+validated with experiments in the immediate future.
+Applications, such as HEV, BEV, and PHEV, usually have
+hundreds, or even thousands, of battery cells in series to
+meet their high power and energy requirements. Hence the
+vehicle level battery thermal management will be performed
+on a module basis, instead of on a cell basis. The single
+cell thermal model used in this paper can be scaled up to a
+pack model by considering cell-to-cell thermal interaction, and
+the parameterization methodology and the adaptive observer
+design will be investigated for the pack level model. Initial
+results of this paper can be found in [22].
+REFERENCES
+[1] C. Y. Wang and V. Srinivasan, “Computational battery dynamics
+(CBD)—electrochemical/thermal
+coupled modeling and multi-scale
+modeling,” J. Power Sour., vol. 110, no. 2, pp. 364–376, 2002.
+[2] S. A. Hallaj, H. Maleki, J. Hong, and J. Selman, “Thermal modeling and
+design considerations of lithium-ion batteries,” J. Power Sour., vol. 83,
+nos. 1–2, pp. 1–8, 1999.
+[3] H. Maleki and A. K. Shamsuri, “Thermal analysis and modeling of a
+notebook computer battery,” J. Power Sour., vol. 115, no. 1, pp. 131–136,
+2003.
+[4] W. B. Gu and C. Y. Wang, “Thermal-electrochemical modeling of battery
+systems,” J. Electrochem. Soc., vol. 147, no. 8, pp. 2910–2922, 2000.
+[5] R. Mahamud and C. Park, “Reciprocating airﬂow for Li-ion battery
+thermal management to improve temperature uniformity,” J. Power Sour.,
+vol. 196, no. 13, pp. 5685–5696, 2011.
+[6] K. Smith and C.-Y. Wang, “Power and thermal characterization of a
+lithium-ion battery pack for hybrid-electric vehicles,” J. Power Sour.,
+vol. 160, no. 1, pp. 662–673, 2006.
+[7] D. Bernardi, E. Pawlikowski, and J. Newman, “A general energy balance
+for battery systems,” J. Electrochem. Soc., vol. 132, no. 1, pp. 5–12,
+1985.
+[8] C. Forgez, D. V. Do, G. Friedrich, M. Morcrette, and C. Delacourt,
+“Thermal modeling of a cylindrical LiFePO4/graphite lithium-ion bat-
+tery,” J. Power Sour., vol. 195, no. 9, pp. 2961–2968, 2010.
+[9] C. W. Park and A. K. Jaura, “Dynamic thermal model of Li-ion battery
+for predictive behavior in hybrid and fuel cell vehicles,” in Proc. SAE
+Congr., 2003, no. 2003-01-2286, pp. 1835–1842.
+[10] K. Smith, G.-H. Kim, E. Darcy, and A. Pesaran, “Thermal/electrical
+modeling for abuse-tolerant design of lithium ion modules,” Int. J.
+Energy Res., vol. 34, no. 2, pp. 204–215, 2009.
+[11] Y. Hu, S. Yurkovich, Y. Guezennec, and B. Yurkovich, “Electro-thermal
+battery model identiﬁcation for automotive applications,” J. Power Sour.,
+vol. 196, no. 1, pp. 448–457, 2011.
+[12] T. Yoshida, M. Takahashi, S. Morikawa, C. Ihara, H. Katsukawa,
+T. Shiratsuchi, and J. I. Yamakic, “Degradation mechanism and life
+prediction of lithium-ion batteries,” J. Electrochem. Soc., vol. 153, no. 3,
+pp. A576–A582, 2006.
+[13] Z. Li, L. Lu, M. Ouyang, and Y. Xiao, “Modeling the capacity degra-
+dation of LiFePO4/graphite batteries based on stress coupling analysis,”
+J. Power Sour., vol. 196, no. 22, pp. 9757–9766, 2011.
+[14] J. Hall, A. Schoen, A. Powers, P. Liu, and K. Kirby, “Resistance growth
+in lithium ion satellite cells. I. Non destructive data analyses,” in Proc.
+208th ECS Meeting, Los Angeles, CA, Oct. 2005, p. 1.
+[15] A. P. Schmidt, M. Bitzer, and L. Guzzella, “Experiment-driven elec-
+trochemical modeling and systematic parameterization for a lithium-ion
+battery cell,” J. Power Sour., vol. 195, no. 15, pp. 5071–5080, 2010.
+[16] M. Verbrugge and E. Tate, “Adaptive state of charge algorithm for nickel
+metal hydride batteries including hysteresis phenomena,” J. Power Sour.,
+vol. 126, nos. 1–2, pp. 236–249, 2004.
+[17] B. Saha, K. Goebel, S. Poll, and J. Christophersen, “Prognostics methods
+for battery health monitoring using a Bayesian framework,” IEEE Trans.
+Instrum. Meas., vol. 58, no. 2, pp. 291–296, Feb. 2009.
+[18] H. E. Perez, J. B. Siegel, X. Lin, A. G. Stefanopoulou, Y. Ding, and M. P.
+Castanier, “Parameterization and validation of an integrated electro-
+thermal LFP battery model,” in Proc. ASME Dynam. Syst. Control Conf.,
+2012, pp. 1–10.
+[19] X. Lin, H. E. Perez, J. B. Siegel, A. G. Stefanopoulou, Y. Li, and
+R. D. Anderson, “Quadruple adaptive observer of the core temperature in
+cylindrical Li-ion batteries and their health monitoring,” in Proc. Amer.
+Control Conf., 2012, pp. 1–6.
+[20] P. A. Ioannou and J. Sun, Robust Adaptive Control. Englewood Cliffs,
+NJ: Prentice-Hall, 1996.
+[21] A. Zukauskas, “Heat transfer from tubes in crossﬂow,” Adv. Heat
+Transfer, vol. 8, pp. 93–160, 1972.
+[22] X. Lin, H. E. Perez, J. B. Siegel, A. G. Stefanopoulou, Y. Ding, and
+M. P. Castanier, “Parameterization and observability analysis of scalable
+battery clusters for onboard thermal management,” J. Oil Gas Sci.
+Technol., 2012, to be published.
+[23] T.-K. Lee, Y. Kim, A. G. Stefanopoulou, and Z. Filipi, “Hybrid elec-
+tric vehicle supervisory control design reﬂecting estimated lithium-ion
+battery electrochemical dynamics,” in Proc. Amer. Control Conf., 2011,
+pp. 388–395.
+[24] J. Windsor, L. Silverberg, and G. Lee, “Convergence rate analysis of
+a multivariable recursive least squares parameter estimator,” in Proc.
+Amer. Control Conf., 1994, pp. 465–469.
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 
+
+===== page 11 =====
+LIN et al.: ONLINE PARAMETERIZATION OF LUMPED THERMAL DYNAMICS
+1755
+[25] A. Astrom and B. Wittenmark, Adaptive Control. Reading, MA:
+Addison-Wesley, 1989.
+[26] R. Williams and D. Lawrence, Linear State-Space Control Systems. New
+York: Wiley, 2007.
+[27] R. E. Kalman, “A new approach to linear ﬁltering and prediction
+problems,” Trans. ASME J. Basic Eng., vol. 82, pp. 35–45, 1960.
+Xinfan Lin received the B.S. and M.S. degrees in
+automotive engineering from Tsinghua University,
+Beijing, China, in 2007 and 2009, respectively. He
+is currently pursuing the Ph.D. degree with the
+Department of Mechanical Engineering, University
+of Michigan, Ann Arbor.
+His current research interests include thermal mod-
+eling, identiﬁcation and estimation of lithium ion
+batteries, and detection of imbalance in battery
+strings.
+Hector
+E.
+Perez
+received the B.S. degree in
+mechanical engineering from California State Uni-
+versity, Northridge, in 2010. He is currently pursuing
+the M.S.E. degree in mechanical engineering with
+the University of Michigan, Ann Arbor.
+He is currently a Graduate Student Research Assis-
+tant of mechanical engineering with the University
+of Michigan. His current research interests include
+experimental validation of electrothermal lithium ion
+battery models.
+Mr. Perez was a recipient of the GEM Fellowship
+sponsored by the Oak Ridge National Laboratory and the University of
+Michigan.
+Jason B. Siegel received the B.S., M.S., and Ph.D.
+degrees from the University of Michigan, Ann
+Arbor, in 2004, 2006, and 2010 respectively.
+He is currently a Postdoctoral Research Fellow
+with the Powertrain Control Laboratory, University
+of Michigan. His current research interests include
+modeling and control of alternative energy storage
+and conversion systems for automotive applications.
+Anna G. Stefanopoulou (F’09) is a Professor of
+mechanical engineering and the Director of the
+Automotive Research Center, University of Michi-
+gan, Ann Arbor. From 1998 to 2000, she was an
+Assistant Professor with the University of California,
+Santa Barbara. From 1996 to 1997, she was a
+Technical Specialist with Ford Motor Company. She
+has authored or co-authored more than 200 papers
+and a book on estimation and control of internal
+combustion engines and electrochemical processes
+such as fuel cells and batteries. She holds nine U.S.
+patents.
+Prof. Stefanopoulou is a Fellow of the ASME. She was a recipient of four
+Best Paper Awards.
+Yonghua Li received the Ph.D. degree in control
+theory and applications from the Beijing University
+of Aeronautics and Astronautics, Beijing, China.
+He has intensive experience in academia and
+industry. He is currently a Research Engineer with
+the Research and Advanced Engineering Division,
+Ford Motor Company, Dearborn, MI. His current
+research interests include supervisory control of
+discrete event systems, automotive engine control,
+hybrid vehicle control, and automotive traction bat-
+tery management systems. He has authored or co-
+authored a number of papers in journals and conferences. He holds several
+U.S. patents.
+R. Dyche Anderson received the B.S. ChE. degree
+from Michigan Technological University, Houghton,
+and the M.S. degree in chemical engineering from
+New Mexico State University, Las Cruces.
+He is currently a Technical Expert of Battery
+Controls with Ford Motor Company, Dearborn, MI.
+He is involved in leading the Advanced Battery
+Controls and Systems Group, Ford Research and
+Advanced Engineering Division. He has 25 years of
+experience in batteries, battery controls, and battery
+systems at both Ford and the Naval Surface Warfare
+Center, Crane, IN. He has researched a wide variety of battery chemistries,
+including primary, secondary, and reserve systems. He has conducted research
+on product development, supervised development of batteries, battery sys-
+tems, and battery controls and has delivered batteries, battery controls,
+and/or battery systems for automotive, missile, and other applications. He
+is involved in the development of a training course on internal battery
+controls used globally with Ford Motor Company. He has authored or
+co-authored numerous papers. He holds two patents on battery controls
+technology.
+Yi Ding is currently an Electrical Engineer with
+Ground Vehicle Power & Mobility, U.S. Army Tank
+Automotive Research, Development, and Engineer-
+ing Center, Warren, MI. He is involved in monitoring
+energy storage research and development status and
+assisting the Energy Storage Team in monitoring
+technical progress of R&D projects. He has more
+than 20 years of experience in battery research and
+development and project management.
+Matthew P. Castanier received the B.S., M.S., and
+Ph.D. degrees from the University of Michigan, Ann
+Arbor, in 1989, 1992, and 1995, respectively.
+He is currently a Research Mechanical Engineer
+with the U.S. Army Tank Automotive Research,
+Development, and Engineering Center, where he
+has been since 2008. He was a Research Fac-
+ulty Member for 12 years in the Department of
+Mechanical Engineering, University of Michigan.
+His current research interests include reduced-order
+modeling of ground vehicle structures, modeling
+and simulation of automotive energy storage systems, and multidiscipli-
+nary design optimization. He has authored or co-authored more than 30
+articles in archival journals and over 75 papers in refereed conference
+proceedings.
+Authorized licensed use limited to: University of Oklahoma Libraries. Downloaded on June 12,2026 at 23:39:16 UTC from IEEE Xplore.  Restrictions apply. 

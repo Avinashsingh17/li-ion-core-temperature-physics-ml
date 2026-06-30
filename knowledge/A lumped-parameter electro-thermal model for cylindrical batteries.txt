@@ -1,0 +1,1611 @@
+
+===== page 1 =====
+A lumped-parameter electro-thermal model for cylindrical batteries
+Xinfan Lin a,*, Hector E. Perez a, Shankar Mohan b, Jason B. Siegel a,
+Anna G. Stefanopoulou a, Yi Ding c, Matthew P. Castanier c
+a Department of Mechanical Engineering, University of Michigan, Ann Arbor, MI 48109, USA
+b Department of Electrical Engineering and Computer Science, University of Michigan, Ann Arbor, MI 48109, USA
+c U.S. Army Tank Automotive Research, Development, and Engineering Center (TARDEC), Warren, MI 48397, USA
+h i g h l i g h t s
+ An electro-thermal model capturing battery SOC, voltage, skin and core temperature.
+ A convenient parameterization method identifying the two sub-models separately.
+ Validation of the identiﬁed model with electrochemical impedance spectroscopy.
+ Experimental validation with cycles covering 20e100% SOC, 5e38 C, and max C-rate 20C.
+a r t i c l e i n f o
+Article history:
+Received 3 September 2013
+Received in revised form
+9 January 2014
+Accepted 9 January 2014
+Available online 31 January 2014
+Keywords:
+Lithium ion batteries
+Electro-thermal model
+Parameterization
+Core temperature
+State of charge
+a b s t r a c t
+Combining several existing lumped-parameter models, this paper presents an electro-thermal model for
+cylindrical batteries. The model consists of two sub-models, an equivalent-circuit electrical model and a
+two-state thermal model which are coupled through heat generation and temperature dependence of
+the electrical parameters. The computationally efﬁcient 5-state model captures the state of charge (SOC),
+terminal voltage, surface temperature and the often neglected core temperature of a battery for wide
+range of operating conditions. The proposed parameterization scheme allows separate identiﬁcation of
+the electric and thermal sub-models, greatly reducing the complexity of the parameterization process.
+The methodology is applied to a LiFePO4/graphite battery. Comparison with the electrochemical
+impedance spectroscopy data clariﬁes the frequency range of the model ﬁdelity. The model is further
+validated with two drive-cycle tests, covering SOC range 25%e100%, temperature 5 Ce38 C, and
+maximum C-rate of 22C.
+ 2014 Elsevier B.V. All rights reserved.
+1. Introduction
+Vehicle electriﬁcation, including application of hybrid electric
+vehicles (HEV), plug-in electric vehicles (PHEV) and battery electric
+vehicles (BEV), has been considered as a promising solution to the
+upcoming energy and environmental issues. Among all types of
+batteries, lithium ion batteries are nowadays widely used for
+automotive applications due to their advantages in energy/power
+density, charge efﬁciency among others. Correct estimation of the
+electrical and thermal dynamics of batteries is critical for safe and
+efﬁcient operation. Model based observers have been widely
+considered for such purpose, where electrical models are used to
+estimate the state of charge (SOC) and voltage [1e3], and thermal
+models are applied for temperature monitoring [4e7].
+The criteria for judging the quality of a control-oriented model
+include model ﬁdelity, computational efﬁciency and ease of
+parameterization. Existing electrical models vary in complexity and
+ﬁdelity. In some applications, where the applied current is small
+and simple, a coulomb counting-based OCV-R model is sufﬁcient
+[8]. Such model consists of an SOC-dependent open circuit voltage
+(OCV) and an ohmic resistance. More complicated models, such as
+partial differential equation (PDE)-based electrochemical models
+[9e11], have also been used to capture the electrochemical pro-
+cesses during battery operation, giving more accurate voltage
+estimation over a wide range of current inputs. However, these
+models are computationally intensive and difﬁcult to parameterize
+[12]. To balance complexity and ﬁdelity, equivalent circuit models
+[1,13,14] are widely adopted in battery management systems (BMS),
+* Corresponding author.
+E-mail address: xﬂin@umich.edu (X. Lin).
+Contents lists available at ScienceDirect
+Journal of Power Sources
+journal homepage: www.elsevier.com/locate/jpowsour
+0378-7753/$ e see front matter  2014 Elsevier B.V. All rights reserved.
+http://dx.doi.org/10.1016/j.jpowsour.2014.01.097
+Journal of Power Sources 257 (2014) 1e11
+
+===== page 2 =====
+where a series of resistor-capacitor (ReC) pairs are used to capture
+the voltage dynamics.
+For temperature estimation of the cylindrical battery, existing
+PDE-based thermal models can predict the detailed temperature
+distribution throughout the battery [10,15,16]. However, like the
+electrochemical models, these models are not easy to compute in
+real time and parameterize. Therefore, single-state models, where
+the thermal dynamics are represented by a bulk temperature
+[17,18], have been widely used due to their computational efﬁ-
+ciency. Nevertheless, such approximation might lead to over-
+simpliﬁcation since the temperature in the battery core can be
+much higher than in the surface [19]. Two-state thermal models
+capturing both the surface and the core temperatures have also
+been studied in Refs. [6,19e21]. Such models are capable of esti-
+mating the core temperature, and are efﬁcient for control practice
+due to their limited number of states.
+Electro-thermal models constructed by combining the electrical
+and thermal models introduced above have also been studied
+broadly. Some of these works are conducted with pure PDE-based
+approaches, such as [15,22], where an electrochemical model is
+coupled with a heat-equation based thermal model. Some apply
+lumped models to capture both the electrical and thermal dy-
+namics, such as [23] (equivalent-circuit electrical model þ single-
+state thermal model), and [4] (equivalent-circuit þ lumped thermal
+model along the longitudinal direction). Others apply mixed ap-
+proaches. For example, in Refs. [10,24], the electrical dynamics are
+modeled by an electrochemical model, and a single-state thermal
+model is used to capture the bulk temperature.
+In this paper, a new control-oriented electro-thermal model is
+formulated by integrating an equivalent-circuit electrical model
+with a two-state thermal model. The thermal model captures the
+surface and core temperatures as the two states. Compared with the
+single-state model, this model provides higher ﬁdelity with mini-
+mal increase in complexity, and it is more computationally efﬁcient
+than the PDE-based models. Parameters of the electrical model are
+dependent on temperature, SOC and current direction. As a result,
+model parameterization can be computationally expensive and
+time consuming, requiring large dataset and advanced optimization
+methods, such as the genetic algorithm [1]. The parameterization
+strategy developed in this paper allows separate identiﬁcation of
+electrical and thermal parameters in a straightforward way by
+isolating the dynamics of each sub-model. The electrical parameters
+are ﬁrst identiﬁed under isothermal and SOC-invariant conditions
+for different temperatures, SOCs and current directions, similar to
+the method in Ref. [25]. The thermal model is then parameterized
+with a drive-cycle test using the heat generation calculated based
+on the current and voltage measurement and the open circuit
+voltage in the electrical model. The designed method has been
+applied to an A123 LiFePO4/graphite battery. As an extension of [26],
+in this paper, frequency response of the modeled voltage dynamics
+is studied by comparing the model impedance with the electro-
+chemical impedance spectroscopy (EIS) measurement. The identi-
+ﬁed electro-thermal model is also validated by two drive-cycle tests.
+Good model ﬁdelity is achieved under high current, shown by a
+drive-cycle test with maximum current rate of 22C and temperature
+variation between 25 C and 38 C.
+2. Coupled electro-thermal battery model
+In this section, a coupled electro-thermal model is formulated
+for cylindrical batteries. The terminal voltage is captured by an
+equivalent circuit model, and a two-state thermal model is adopted
+to estimate the core and surface temperatures. The parameters of
+the electrical model depend on temperature, SOC and current di-
+rection, while the thermal parameters are treated as constant.
+2.1. Electrical model
+The schematic of an equivalent circuit model is shown in Fig. 1.
+Under a current I (positive for discharge), the terminal voltage VT is
+modeled in three parts as
+VT ¼ VOCV  IRs 
+X
+n
+i ¼ 1
+VRC;i:
+(1)
+The ﬁrst part is the open circuit voltage, VOCV, which is usually a
+nonlinear function of SOC. The SOC is calculated by coulomb
+counting as
+dSOC
+dt
+¼  1
+Cbat
+I;
+(2)
+where Cbat is the battery capacity. The second part is the voltage
+drop over a series resistor Rs, accounting for the ohmic resistance.
+The last part is the voltage drop across a series of parallel ReC
+circuits, VRC,i, which are used to approximate the voltage dynamics
+during transients. The dynamics of each ReC pair, VRC,i, are
+described as
+dVRC;i
+dt
+¼  1
+RiCi
+VRC;i þ 1
+Ci
+I;
+(3)
+where Ri and Ci are the equivalent resistance and capacitance.
+Typically, the values of Ri and Ci vary with SOC, current direction,
+and temperature which is captured by the thermal model to be
+introduced in Section 2.2. It will be shown in Section 3.1 that in-
+clusion of more ReC pairs improves the model ﬁdelity at the cost of
+complexity.
+2.2. Two-state thermal model
+By assuming longitudinal homogeneity, a two-state model
+[6,20], as shown in Fig. 2, is used to capture the lumped thermal
+dynamics of a cylindrical battery. Governing equations of Tc and Ts
+are [6,20],
+CcdTc
+dt ¼ Q þ TsTc
+Rc
+CsdTs
+dt ¼ TfTs
+Ru
+ TsTc
+Rc
+:
+(4)
+The heat generation Q in Eq. (4) is a byproduct of the chemical
+reactions taking place in the electrode assembly during battery
+operation. The value of Q is calculated based on the electrical
+model, as
+Q ¼ IðVOCV  VTÞ;
+(5)
+Fig. 1. Schematic of the equivalent circuit model.
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+2
+
+===== page 3 =====
+which includes the joule heating and energy dissipated in the
+electrode over-potentials [18]. For more accurate modeling of heat
+generation, reversible heat, such as entropic heat can be included
+[10,19]. A heat conduction resistance, Rc, is used to model the heat
+exchange between the core and the surface. Convective cooling
+through the battery surface is modeled by a convection resistance,
+Ru, between Ts and Tf. The value of Ru depends on the pack geom-
+etry, type of coolant and coolant ﬂow rate. The rates-of-change of Tc
+and Ts are determined by the heat capacity of the core, Cc, and that
+of the casing, Cs.
+2.3. Electro-thermal coupling
+The electrical and the thermal sub-models interact with a two-
+way coupling, as shown in Fig. 3. First, the electrical model calcu-
+lates the SOC and voltage of the battery based on the current I and
+the electrical parameters Rs, Ri and Ci. The difference between VT
+and VOCV, along with I, is used to determine the heat generation Q.
+The thermal model then calculates Tc and Ts based on Q and the
+ambient temperature Tf. The core temperature, Tc, which represents
+the temperature of the lumped electrode assembly, is used to
+determine the temperature-dependent parameters of the electrical
+model. The electro-thermal coupling complicates the parameteri-
+zation of the model, which is usually conducted by ﬁtting the pa-
+rameters to match the measured outputs (VT and Ts) from
+experiments. If the temperature is changing during the experi-
+ments, the temperature-dependent electrical parameters will also
+be varying, making them harder to identify. Experiments designed
+to excite the voltage dynamics without signiﬁcantly changing the
+SOC or temperature are shown in Section 3. Therefore, the pa-
+rameters will be constant (in each step of the experiments), and
+easy to identify.
+3. Model parameterization
+In this section the methodology for parameterizing the electrical
+and thermal sub-models is described. First, the electrical parame-
+ters are identiﬁed based on a series of pulse-relaxation tests. Each
+test is performed under isothermal (and SOC-invariant) conditions.
+In this way, the electrical model is decoupled from the thermal
+model and can be identiﬁed independently. The tests are repeated
+under different SOCs, temperatures and current directions. The
+thermal model is then parameterized with the heat generation
+calculated based on the measured current, voltage and the identi-
+ﬁed open circuit voltage in the electrical model.
+3.1. Parameterization of the electrical model
+Parameterization of the electrical model involves identiﬁcation
+of the open circuit voltage VOCV, capacity Cbat, ohmic resistance Rs,
+and resistance and capacitance of the ReC pairs.
+First, VOCV and Cbat are determined by cycling the battery at a
+low current, e.g. C/20. The battery is charged with the constant
+current (CC) to the high voltage limit recommended by the
+manufacturer before switching to constant voltage (CV) charging
+until the current drops to the cut-off limit, e.g. C/50. The battery is
+then discharged to the low voltage limit with the same constant
+current used in charge. Since the voltage drop across the battery
+internal resistance is negligible under the low current, the differ-
+ence between the charging and the discharging voltage is usually
+small. Therefore, either the charging or discharging voltage proﬁle
+can be used as VOCV. However, for some battery chemistries, e.g.
+LiFePO4, the difference between the charging and discharging
+voltage can be much larger due to hysteresis [27,28]. In such case,
+the average of the charging and discharging voltage can be taken as
+the open circuit voltage, and the hysteresis in voltage may need to
+be modeled. The 100% SOC is deﬁned at the end of the CV charge
+period, and 0% at the end of the discharge. The capacity Cbat is
+determined by the amount of charge between 0% and 100% SOCs.
+The parameters of the equivalent circuits, including Rs, Ri and Ci,
+are identiﬁed based on the pulse-relaxation experiments. Tests are
+conducted in both discharge and charge current directions, and the
+discharge case is taken as an example for illustration. The battery is
+ﬁrst charged to 100% SOC under the CCeCV protocol and then
+Fig. 2. Schematic of the two-state thermal model (adapted from Ref. [20]).
+Fig. 3. Coupling between the electrical and the thermal models.
+Fig. 4. Voltage and current proﬁle during the discharging pulse test.
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+3
+
+===== page 4 =====
+relaxed for 2 h to reach electrical and thermal equilibrium. It is then
+discharged to 90% SOC with a current of 1 C (in around 6 min),
+which elevates the battery temperature only minimally. The current
+is then cut to relax the battery for 2 h. The voltage evolution during
+relaxation is recorded for identifying the ReC parameters. The
+procedures are repeated until the voltage reaches the low voltage
+limit. During the experiment, the battery is placed inside a thermal
+chamber, where the temperature is controlled at the desired set-
+point. To obtain the temperature dependency of the parameters, the
+test is performed at multiple temperatures. The voltage and current
+proﬁles during the discharge pulse test of a battery are plotted in
+Fig. 4. Voltage relaxation after each pulse, as shown in the inset of
+Fig. 4, is used to determine the parameters of the equivalent circuit
+at each SOC. It is noted that since both the temperature and SOC are
+constant during the relaxation, the parameters can be easily iden-
+tiﬁed at ﬁxed temperature. The ohmic resistance Rs is calculated by
+the initial voltage jump DVs based on the Ohm’s law,
+Rs ¼ DVs
+I
+;
+(6)
+where I is the current applied during the pulse. The values of Ri’s
+and Ci’s are identiﬁed by using the relaxation voltage after the
+initial jump, Vrex(tr), shown in Fig. 4. The evolution of Vrex can be
+derived by solving Eq. (3), as
+VrexðtrÞ ¼
+X
+n
+i ¼ 1
+IRi
+
+1  e
+tp
+RiCi
+
+1  e tr
+RiCi
+
+;
+(7)
+where tp is the pulse duration before the relaxation. The resistance
+Ri and the capacitance Ci of each ReC pair are then ﬁtted to mini-
+mize the least square error in voltage,
+J ¼ min
+Ri;Ci
+X
+k
+VrexðkÞ  Vrex;dataðkÞ2;
+(8)
+where Vrex,data(k) is the measured relaxation voltage at each time
+instant k. The number of ReC pairs (n) can be determined based on
+the ﬁtting results to be discussed later.
+3.2. Parameterization of the thermal model
+The parameters of the thermal model, including the conduction
+resistance Rc, convection resistance Ru, and heat capacities of the
+battery core and surface Cc and Cs, are identiﬁed based on the
+method developed in Refs. [6,29]. Considering the difﬁculty of
+measuring the core temperature Tc, parameterization is designed
+by only using the current I, surface temperature Ts and coolant ﬂow
+temperature Tf, which can all be easily measured.
+As the ﬁrst step, a parametric model in the Laplace domain
+Refs. [30],
+ZðsÞ ¼ qTFðsÞ
+(9)
+needs to be derived. In Eq. (9), Z is referred to as the observation, q is
+the parameter, and F is the regressor consisting of measured sig-
+nals. For the thermal model in Eq. (4), the parametric model can be
+derived by performing Laplace transform to the governing equa-
+tions and eliminating the unmeasured Tc by replacing with
+measured signals, as
+s2TsðsÞ ¼
+1
+CcCsRc
+QðsÞ þ
+1
+CcCsRcRu
+
+TfðsÞ  TsðsÞ
+
+
+Cc þ Cs
+CcCsRc
+þ
+1
+CsRu
+
+sTsðsÞ:
+(10)
+In the form of Eq. (9), we have
+observation : Z ¼ s2TsðsÞ
+regressors : F ¼  QðsÞ;
+TfðsÞ  TsðsÞ;
+sTsðsÞ 	T
+parameters : q ¼ ½ a;
+b;
+g T;
+(11)
+where the original physical parameters are now lumped into
+a ¼
+1
+CcCsRc
+;
+b ¼
+1
+CcCsRcRu
+;
+g ¼ CcRu þ CsRu þ CcRc
+CcCsRcRu
+:
+(12)
+The least squares algorithm is applied to identify q [30] based on
+the parametric model,
+bq ¼
+
+FTF
+1FTZ;
+(13)
+where bq is the estimate of q. The parameter identiﬁcation is per-
+formed in the time domain, and the matrices Z and F consist of the
+signals Z and F at different time instant tk during the experiment,
+Z ¼
+2
+66666666664
+zðt1Þ
+mðt1Þ
+zðt2Þ
+mðt2Þ
+.
+zðtNÞ
+mðtNÞ
+3
+77777777775
+;
+F ¼
+2
+66666666664
+fTðt1Þ
+mðt1Þ
+fTðt2Þ
+mðt2Þ
+.
+fTðtNÞ
+mðtNÞ
+3
+77777777775
+mðtkÞ ¼
+ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+1 þ fTðtkÞfðtkÞ
+q
+;
+(14)
+where z and f are the time-domain signals of Z and F, m is the
+normalization factor used to enhance the robustness of the algo-
+rithm, and N is the number of time instants. In Eq. (14), the needed
+time-domain signals z and f include Q, Ts, Tf, and the ﬁrst and
+second time derivatives of Ts (sTs and s2Ts in the time domain). The
+temperature Ts and Tf are measured, and Q is calculated based on
+Eq. (5). As for the time derivatives of Ts, in order to avoid differ-
+entiating the signals which is easily corrupted by noises, a second
+order ﬁlter
+1
+LðsÞ ¼
+1
+ðs þ l1Þðs þ l2Þ ;
+(15)
+needs to be used. The ﬁltered parametric model will become
+Zf ¼ qTFf
+Zf ¼
+1
+LðsÞ
+
+s2Ts
+
+¼
+s2
+LðsÞ Ts
+Ff ¼
+1
+LðsÞ
+ Q
+Tf  Ts
+sTs
+	T
+¼
+h
+1
+LðsÞ Q
+1
+LðsÞ
+
+Tf  Ts
+
+s
+LðsÞ Ts
+iT
+:
+(16)
+The time-domain signals of Zf and Ff, zf and 4f will be used in Eq.
+(14) in place of z and f, which are obtained by passing the
+measured/calculated signals through relevant ﬁlters, as shown in
+Fig. 5.
+The 95% conﬁdence interval of each identiﬁed parameter bqj can
+be calculated as [31]
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+4
+
+===== page 5 =====
+bqj  1:96
+ﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+vbar
+bqj
+
+r
+:
+(17)
+The estimated variance of bqj, vbarðbqjÞ, is the diagonal element of
+the covariance matrix,
+cov
+bq
+
+¼
+
+FTF
+1s2;
+(18)
+where s2 is the variance of zf,
+s2 ¼
+P
+k
+
+zfðtkÞ  bq
+TffðtkÞ
+2
+N
+:
+(19)
+By using the above algorithm, the lumped parameters a, b and g
+are identiﬁed. It is noted that only three of the four original pa-
+rameters can be obtained based on a, b, and g. Therefore, one of the
+parameters needs to be assumed in order to determine the other
+three. It is found that Cs can be easily calculated based on the
+speciﬁc heat capacity and dimensions of the casing. The estimates
+of Ru, Rc and Cc can then obtained by
+bRu ¼ ba
+bb
+;
+bRc ¼
+1
+baCsbC c
+;
+bCc ¼ bgCsbRu þ baC2
+s bRu þ 1
+babRuCs
+:
+(20)
+4. Experiment setup
+Experiments have been conducted on a 2.3 Ah A123 26650
+LiFePO4 battery to parameterize and validate the electro-thermal
+model. A Yokogawa GS-610 Source-Measure Unit was used for the
+tests to parameterize the electrical model. The C/20 CCeCV test was
+performed ﬁrst to identify VOCV and Cbat. The high and low voltage
+limits for this battery are 3.6 V and 2 V, and the cutoff current of CV
+is set at 50 mA. The unit was then programmed to run the pulse-
+relaxation tests to parameterize the ReC pairs. During the tests,
+the battery was cycled inside a Cincinnati Sub-Zero ZPHS16-3.5-
+SCT/AC thermal chamber, where the ambient temperature was
+controlled. The test is conducted between 5 C and 45 C at every
+10
+C interval to obtain the temperature dependency of the
+parameters.
+A drive-cycle, the scaled urban assault cycle (UAC) [32], which
+contains sufﬁcient excitation [6], was used to parameterize the
+thermal model. The test was conducted with a Bitrode FTV1-200/
+50/2-60 cycler, which is capable of providing the power needed
+to simulate the drive-cycle. The battery was placed in a designed
+ﬂow chamber with a fan regulating the air ﬂow rate. The fan speed
+was ﬁxed so that a constant convection resistance Ru would be
+identiﬁed. T-type thermocouples were installed on the battery
+surface to measure Ts, and inside the ﬂow chamber to measure Tf.
+The measured Ts and Tf were used for model identiﬁcation. In order
+to validate the identiﬁed thermal model, a thermocouple was also
+installed inside the battery to measure Tc [6]. The whole experiment
+setup is shown in Fig. 6.
+Fig. 5. Filtering of the signals used to identify the Thermal Model.
+Fig. 6. Experiment setup.
+0
+0.2
+0.4
+0.6
+0.8
+1
+2.4
+2.6
+2.8
+3
+3.2
+3.4
+SOC
+Voltage (V)
+voltage during charging
+voltage during discharging
+average voltage
+Fig. 7. Terminal voltage vs. SOC under C/20 charging/discharging tests.
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+5
+
+===== page 6 =====
+5. Parameterization results
+In this section, the parameters of the LiFePO4/graphite battery
+identiﬁed based on the methodology discussed in Section 3 are
+demonstrated.
+5.1. Identiﬁed parameters
+The open circuit voltage VOCV and capacity Cbat are ﬁrst
+measured based on the C/20 cycling test. The measured terminal
+voltage is shown in Fig. 7. As mentioned, due to the hysteresis of the
+LiFePO4 chemistry, a gap is observed between the charge and
+discharge voltage curves. The average of the two is taken as VOCV
+and modeling of the hysteresis remains to be addressed. The actual
+battery capacity Cbat was measured at 2.1 Ah.
+The series resistance Rs identiﬁed from the pulse-relaxation
+tests under different SOCs, temperatures and current directions is
+shown in Fig. 8. It can be seen that Rs has a minimal dependence on
+SOC over the tested range (10%90% SOC), moderate dependence
+on current direction, and strong dependence on temperature. The
+value of Rs decreases as the temperature rises, dropping by more
+than 50% from 19.1 mU at 5 C to 8.2 mU at 45 C under discharge.
+This trend can be explained by the more active reaction kinetics at
+higher temperature. An Arrhenius-like function,
+Rs;l ¼ Rs;0;l exp
+ 
+TrefRs;l
+Tm  TshiftRs;l
+!
+;
+(21)
+is used to ﬁt the temperature dependency of Rs, where l ¼ c for
+charge, and l ¼ d for discharge.
+To parameterize the rest of the electrical model, the number of
+ReC pairs needs to be determined ﬁrst. Equivalent circuits with
+single, double and triple ReC pairs have been ﬁtted to the relaxa-
+tion voltage in the pulse-relaxation test. Comparison of the ﬁtting is
+shown in Fig. 9. It can be seen that the single ReC model yields large
+error especially during the ﬁrst 500 s of relaxation, whereas the
+error of the double ReC model is much smaller over the entire
+period. The improvement from the double ReC to the triple ReC
+model is much smaller. The double ReC model is hence chosen for
+its advantage in computational efﬁciency. The identiﬁed parame-
+ters of the double ReC pairs are shown in Figs. 10e13.
+For R1 and R2, it can be seen that, similar to Rs, their values
+decrease as the temperature increases due to the more active ki-
+netics at elevated temperature. Nevertheless, compared with Rs, R1
+and R2 exhibit more prominent dependence on SOC. Interestingly,
+such dependence is opposite for charge and discharge. The charge
+resistance increases signiﬁcantly in the high SOC range (80%
+100%), whereas the discharge resistance is higher at SOCs near 0%.
+The observed SOC dependency is in accordance with those in
+Refs. [25], where the parameters identiﬁed at SOCs closer to 0% and
+100% are available. A second order polynomial is used to ﬁt the SOC-
+dependency of R1 and R2, and an Arrhenius-like function for tem-
+perature dependency,
+Ri;l ¼ R0;i;l þ a1;i;lSOC þ a2;i;lSOC2$exp
+
+TrefR;i;l
+TmTshiftR;i;l
+
+;
+i ¼
+(
+1; for R1
+2; for R2
+; l ¼
+(
+c; for charge
+d; for discharge
+;
+(22)
+0
+0.2
+0.4
+0.6
+0.8
+1
+0.008
+0.01
+0.012
+0.014
+0.016
+0.018
+0.02
+Discharge
+SOC
+Rs (Ohm)
+0
+0.2
+0.4
+0.6
+0.8
+1
+0.008
+0.01
+0.012
+0.014
+0.016
+0.018
+0.02
+Charge
+SOC
+Rs (Ohm)
+5oC
+5oC Fit
+15oC
+15oC Fit
+25oC
+25oC Fit
+35oC
+35oC Fit
+45oC
+45oC Fit
+Fig. 8. Rs under different temperatures, SOCs and current directions.
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+0
+0.02
+0.04
+0.06
+0.08
+0.1
+Time(sec)
+Voltage(V)
+0
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+−5
+−2.5
+0
+2.5
+5
+Time(sec)
+%Error
+7000
+7100
+7200
+0.095
+0.096
+0.097
+0.098
+200
+300
+400
+500
+0.082
+0.085
+0.088
+0.091
+0.094
+Data
+Singe R−C
+Double R−C
+Triple R−C
+7000 7100 7200
+−1
+0
+1
+2
+3
+Single R−C
+Double R−C
+Triple R−C
+Fig. 9. Fitting of the relaxation voltage.
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+6
+
+===== page 7 =====
+0
+0.2
+0.4
+0.6
+0.8
+1
+0.005
+0.01
+0.015
+0.02
+0.025
+0.03
+0.035
+0.04
+0.045
+0.05
+0.055
+Discharge
+SOC
+R1 (Ohm)
+0
+0.2
+0.4
+0.6
+0.8
+1
+0.005
+0.01
+0.015
+0.02
+0.025
+0.03
+0.035
+0.04
+0.045
+0.05
+0.055
+Charge
+SOC
+5oC
+5oC Fit
+15oC
+15oC Fit
+25oC
+25oC Fit
+35oC
+35oC Fit
+45oC
+45oC Fit
+Fig. 10. R1 under different temperatures, SOCs and current directions.
+0
+0.2
+0.4
+0.6
+0.8
+1
+0
+0.01
+0.02
+0.03
+0.04
+0.05
+0.06
+0.07
+0.08
+Discharge
+SOC
+R2 (Ohm)
+0
+0.2
+0.4
+0.6
+0.8
+1
+0
+0.01
+0.02
+0.03
+0.04
+0.05
+0.06
+0.07
+0.08
+Charge
+SOC
+R2 (Ohm)
+5oC
+5oC Fit
+15oC
+15oC Fit
+25oC
+25oC Fit
+35oC
+35oC Fit
+45oC
+45oC Fit
+Fig. 11. R2 under different temperatures, SOCs and current directions.
+0
+0.2
+0.4
+0.6
+0.8
+1
+500
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+Discharge
+SOC
+C1 (F)
+0
+0.2
+0.4
+0.6
+0.8
+1
+500
+1000
+1500
+2000
+2500
+3000
+3500
+4000
+Charge
+SOC
+5oC
+5oC Fit
+15oC
+15oC Fit
+25oC
+25oC Fit
+35oC
+35oC Fit
+45oC
+45oC Fit
+Fig. 12. C1 under different temperatures, SOCs and current directions.
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+7
+
+===== page 8 =====
+where R0,i,l, a1,i,l, and a2,i,l are the ﬁtted parameters for the SOC
+dependency, and TrefR,i,l and TshiftR,i,l are for the temperature de-
+pendency. The identiﬁed capacitances C1 and C2, plotted in Figs. 12
+and 13, also show notable dependence on temperature and SOC. As
+opposed to the resistance, both capacitance values increase with
+temperature. For the SOC dependence, C1 shows a nearly mono-
+tonically increasing trend from low to high SOC under discharge,
+while its values under charge are relatively constant in the low and
+middle SOC range but see a sharp decrease in the high SOC end. The
+relationship between C2 and SOC is more complicated, as double
+peaks are observed. The values of C1 and C2 are each ﬁtted by a
+quadratic function of SOC afﬁne with temperature,
+Ci;l ¼ C0;i;l þ c1;i;lðSOCÞ þ c2;i;lðSOCÞ2 þ
+
+c3;i;l þ c4;i;l
+
+SOC
+
+þ c5;i;lðSOCÞ2
+Tm;
+i ¼
+ 1; for R1
+2; for R2
+; l ¼
+ c; charge
+d; discharge :
+(23)
+The thermal model is parameterized by using data from the UAC
+drive-cycle test. The measured current I, coolant ﬂow temperature
+Tf, and battery surface temperature Ts are shown in Fig. 14. The
+current I and measured V are used to calculate the heat generation
+along with the parameterized open circuit voltage based on Eq. (5).
+The pre-calculated Cs and identiﬁed Cc, Rc and Ru, along with the
+95% conﬁdence interval, are listed in Table 1. The identiﬁed thermal
+parameters are very close to those in Refs. [6], where the heat
+generation is calculated by using a single lumped internal resis-
+tance Re, as Q ¼ I2Re. This lumped Re includes the heat dissipation
+through the series resistance Rs and the ReC pairs of the equivalent
+circuit model in this paper. As pointed out in Refs. [6], the value of
+Re can be cycle-dependent, or even non-constant within a single
+cycle due to the variability of battery resistance on temperature,
+SOC and other factors. Consequently, if a single Re is used, its value
+needs to be obtained by online identiﬁcation as in Ref. [6]. The
+identiﬁed Re under the UAC is 11.4 mU, which is in-between the
+series resistance Rs and the total resistance Rs þ R1 þ R2 identiﬁed in
+this paper.
+6. Validation of the identiﬁed model
+This section is devoted to validating the identiﬁed electro-
+thermal model. The model dynamics are ﬁrst investigated by
+comparing the model impedance with EIS measurements. The er-
+rors in voltage and temperature estimation under two drive-cycle
+tests will also be evaluated.
+6.1. Comparison of the modeled electrical impedance with EIS
+The battery impedance, Z, is the relationship between the cur-
+rent I and the terminal voltage VT as a function of the current
+frequency,
+0
+0.2
+0.4
+0.6
+0.8
+1
+0
+5
+10
+15
+x 10
+Discharge
+SOC
+C2 (F)
+0
+0.2
+0.4
+0.6
+0.8
+1
+0
+5
+10
+15
+x 10
+Charge
+SOC
+5oC
+5oC Fit
+15oC
+15oC Fit
+25oC
+25oC Fit
+35oC
+35oC Fit
+45oC
+45oC Fit
+Fig. 13. C2 under different temperatures, SOCs and current directions.
+0
+5
+10
+15
+20
+25
+30
+35
+40
+−20
+−10
+0
+10
+Current (C−rate)
+0
+5
+10
+15
+20
+25
+30
+35
+40
+25
+26
+27
+Tf (oC)
+0
+5
+10
+15
+20
+25
+30
+35
+40
+26
+28
+30
+32
+t (min)
+Ts (oC)
+Fig. 14. Measured current, battery surface and ﬂow temperatures under UAC.
+Table 1
+Identiﬁed parameters of the thermal model.
+Value
+95% Conﬁdence interval
+Cs (JK1)
+4.5
+e
+Cc (JK1)
+62.7
+59.1e66.4
+Rc (KW1)
+1.94
+1.86e2.01
+Ru (KW1)
+3.19
+3.19e3.20
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+8
+
+===== page 9 =====
+VTðjuÞ ¼ ZðjuÞIðjuÞ;
+(24)
+where j is the imaginary unit, and u is the angular frequency. For
+the electrical model in Eqs. (1)e(3), the impedance at T0 and SOC0,
+can be obtained based on the transfer function from the current to
+the voltage, with the model linearized at T0 and SOC0. The transfer
+function, Z(s), is derived by taking Laplace transformation of the
+linearized model, as
+VTðsÞ ¼ ZðsÞIðsÞ
+ZðsÞ ¼  a
+Cbat
+1
+s  Rs 
+1
+C1
+
+s þ
+1
+R1C1
+ 
+1
+C2
+
+s þ
+1
+R2C2
+ ;
+(25)
+where a is the slope of VOCV, and all parameters are evaluated at T0
+and SOC0. By taking s ¼ ju, the impedance Z(ju) is obtained. The
+Nyquist plot of the modeled Z, where the real part RE(Z) is plotted
+against the imaginary part IM(Z), at 25 C and 80% SOC, is shown in
+Fig. 15 as an example. It can be seen that the modeled impedance
+consists of two arcs in the high and middle frequency ranges, cor-
+responding to the dynamics of the two ReC pairs. The intersection
+with the real axis represents the series resistance Rs.
+The actual battery impedance can be measured by EIS, [33,34],
+where the battery is excited by AC currents with different fre-
+quencies and the response of the voltage is recorded to calculate
+the impedance. EIS has been performed under the open circuit
+condition, with an Autolab PGSTAT302N potentiostat/galvanostat
+under 50 mA AC currents, sweeping frequency from 0.1 mHz to
+5 kHz. The Nyquist plot of the measured impedance is shown in
+Fig. 15, and the magnitude and phase of the impedance at different
+frequencies is plotted in Fig. 16 to compare with the model. As seen
+from Fig. 15, the measured impedance is composed of three parts, a
+semicircle in the frequency range higher than 1 Hz, corresponding
+to the dynamics of the passive ﬁlms at the solid/electrolyte inter-
+face (SEI), an arc in the frequency range 2 mHze1 Hz, representing
+the dynamics of the charge-transfer resistance and the double layer
+capacitance, and a straight line below 2 mHz, related to the dy-
+namics of lithium diffusion [33,35].
+The modeled impedance is more accurate between 0.01 Hz and
+100 Hz than in the higher and lower frequency ranges, according to
+Fig.16. The obtained accuracy in impedance is comparable to that in
+Refs. [36] and [37], where similar electrical models are analyzed. EIS
+has also been conducted at other SOCs, such as 60% and 95%,
+revealing similar behavior. At the high frequency end, as shown in
+Fig. 15, the small semi-circle representing the dynamics of the SEI
+ﬁlm is not modeled, as the right end of the semi-circle is captured
+as the series resistance Rs. The reason may be attributed to lack of
+fast voltage dynamics excited in the pulse-relaxation tests. In the
+low frequency range, the impedance is underestimated due to two
+possible reasons. As indicated by Eq. (25), the modeled impedance
+at low frequencies is related to the slope of VOCV, a, as well as R2 and
+C2. For one thing, a may be inaccurate because of the ﬂatness of
+VOCV (as shown in Fig. 7) and exclusion of hysteresis in VOCV
+modeling. For another, the pulse-relaxation voltage used to iden-
+tiﬁed the ReC pairs is not very sensitive to the slow dynamics (R2
+and C2), as compared to the fast dynamics (R1 and C1), which might
+compromise the accuracy of the identiﬁed R2 and C2. The full bat-
+tery dynamics can be modeled more accurately based on the EIS
+data by using complex impedance components, such as constant
+phase elements (CPE) [33,34]. However, the modeling and param-
+eterization procedure will be much more complicated, and the
+implementation of model in time domain is usually achieved by
+approximation with a signiﬁcant number of ReC pairs [33]. The
+0
+0.01
+0.02
+0.03
+0.04
+0.05
+0.06
+0.07
+−0.02
+0
+0.02
+0.04
+0.06
+0.08
+0.1
+0.12
+RE(Z) (Ω)
+−IM(Z) (Ω)
+0.1mHz
+2mHz
+1Hz
+1kHz
+Diffusion
+Charge transfer resistance 
+and double layer capacitance
+      SEI
+passive film
+Double R−C Model
+EIS Measurement
+Fig. 15. Nyquist plot of the impedance: model vs. EIS measurement.
+10
+−3
+10
+−2
+10
+−1
+10
+0
+10
+1
+10
+2
+0
+0.02
+0.04
+0.06
+0.08
+0.1
+Frequency (Hz)
+|Z| (Ω)
+Double R−C model
+EIS Measurement
+10
+−3
+10
+−2
+10
+−1
+10
+0
+10
+1
+10
+2
+−150
+−100
+−50
+0
+50
+Phase (o)
+Frequency (Hz)
+Fig. 16. Magnitude and phase of the impedance at different frequencies: model vs. EIS
+measurement.
+0
+100
+200
+300
+400
+500
+600
+−5
+0
+5
+10
+15
+Current (C−rate)
+Time (s)
+0
+100
+200
+300
+400
+500
+600
+0.5
+1
+Time (s)
+SOC
+0
+0.02
+0.04
+0.06
+0.08
+0.1
+0
+5
+10
+15
+Frequency (Hz)
+Amplitude
+Fig. 17. Current proﬁle and SOC variation of the charge-depleting cycle (top: current in
+time; middle:SOC; bottom: FFT of current).
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+9
+
+===== page 10 =====
+associated computational load may cause issues for onboard ap-
+plications, especially when the number of cells are large.
+6.2. Validation by drive-cycles
+The model has also been validated by data from two drive-cycle
+tests. The current, SOC, and temperature variation of the validation
+cycles are plotted in Figs. 17e20. The ﬁrst validation cycle is a
+charge-depleting (CD) cycle with maximum current around 10 C
+and average at 4 C. The battery SOC decreases from 100% to 25%,
+and the core temperature increases from 5 C to 23 C in approxi-
+mately 10 min. The second validation cycle, shown in Figs. 19 and
+20, is a more drastic and charge-sustaining (CS) cycle, where the
+maximum current is more than 20 C, and the average around 0.03 C.
+The resulting SOC varies between 30% and 53%, while the tem-
+perature ﬂuctuates between 25 C and 38 C. The two cycles
+combined cover an SOC range from 25% to 100%, and a temperature
+range between 5 C and 38 C, which are roughly the ranges that
+the model parameters are identiﬁed in this paper. Fourier trans-
+formation has also been performed to demonstrate the frequency
+spectrum of the two cycles, as shown in Figs. 17 and 19. It can be
+seen that the CD cycle is slower and contains a peak at 0 Hz, which
+is the DC component corresponding to the mean charge-depleting
+rate. The dynamics of the CS cycle are faster and have more evenly
+distributed frequency content.
+The voltage and temperatures estimated by the parameterized
+model are plotted in Figs. 18 and 20 to compare with the mea-
+surements. The root mean square errors (RMSE) of the estimation
+by using parameters directly identiﬁed and based on ﬁtted func-
+tions Eqs. (22) and (23) are listed in Table 2. It can be seen that the
+identiﬁed model shows good ﬁdelity under the high-power charge-
+sustaining cycle, as the voltage RMSE is below 20 mV, and the
+temperature RMSE below 1C. Larger voltage RMSE (45 mV) are
+observed in the charge-depleting cycle. The model performance is
+compared to that of similar electrical models under drive-cycle
+tests in Refs. [1,14]. In Ref. [1], an equivalent circuit electrical
+model with 2 RC pairs and 1 hysteresis state is parameterized and
+validated with a speciﬁc drive-cycle test. In Ref. [14], electrical
+models with 1e3 RC pairs and 1 hysteresis state are validated under
+the Dynamic Stress Test (DST) and Federal Urban Dynamic Schedule
+(FUDS) respectively. The speciﬁcations of the models and drive-
+cycles and the estimation errors are shown in Table 3. The
+voltage RMSEs of models in Ref. [14] are as small as 8 mV, partially
+due to the mild operating condition (small current rate and
+invariant temperature) besides the well identiﬁed model. The
+estimation error of the electro-thermal model in this paper under
+the CS cycle is close to that of the model in Ref. [1]. As for the CD
+cycle, there are several possible reasons for the larger voltage
+estimation error. First, hysteresis of the LiFePO4 chemistry has not
+been included in the modeling. The nonlinear hysteresis dynamics
+in voltage are more prominent under unidirectional current than
+under charge-balance current proﬁle. Second, it has been revealed
+by the EIS measurement that the battery voltage dynamics are not
+very well captured in the low frequency range (below 0.01 Hz), and
+the mismatch becomes larger as the frequency approaches 0 Hz
+(Figs. 15 and 16). The current proﬁle of the CD cycle, whose fre-
+quency distribution has a high peak at 0 Hz corresponding to an
+0
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+−20
+0
+20
+Current (C−rate)
+0
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+0.2
+0.4
+0.6
+Time (s)
+SOC
+0
+0.05
+0.1
+0.15
+0.2
+0
+1
+2
+Frequency (Hz)
+Amplitude
+Fig. 19. Current proﬁle and SOC variation of charge-sustaining cycle (top: current in
+time; middle:SOC; bottom: FFT of current).
+0
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+2
+2.5
+3
+3.5
+VT (V)
+Time (s)
+Estimated VT
+Measured VT
+0
+1000
+2000
+3000
+4000
+5000
+6000
+7000
+25
+30
+35
+40
+45
+Time (s)
+T (oC)
+Estimated Tc
+Estimated Ts
+Measured Tc
+Measured Ts
+Estimated VT
+Measured VT
+Fig. 20. Voltage and temperature estimation under the charge-sustaining cycle.
+Table 2
+Estimation errors when using parameters directly identiﬁed and parameters based
+on ﬁtted functions.
+RMSE
+VT (mV)
+Ts (C)
+Tc (C)
+CD cycle (directly identiﬁed)
+45.4
+0.20
+0.56
+CD cycle (ﬁtted function)
+48.6
+0.25
+0.62
+CS cycle (directly identiﬁed)
+20.3
+0.65
+0.92
+CS cycle (ﬁtted function)
+19.2
+0.67
+0.96
+0
+100
+200
+300
+400
+500
+600
+2.6
+2.8
+3
+3.2
+3.4
+3.6
+VT (V)
+Time (s)
+Estimated VT
+Measured VT
+0
+100
+200
+300
+400
+500
+600
+0
+10
+20
+30
+Time (s)
+T (oC)
+Estimated Tc
+Estimated Ts
+Measured Tc
+Measured Ts
+Fig. 18. Voltage and temperature estimation under the charge-depleting cycle.
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+10
+
+===== page 11 =====
+average net discharging rate of 4C, may contribute to the estimation
+error signiﬁcantly. Speciﬁcally, as seen from Figs. 17 and 18, the
+largest voltage errors are observed between 100 s and 140 s, where
+the current is held around 8C for 40 s. This part alone results in
+12 mV increase in the overall RMSE voltage error.
+7. Conclusion
+In this paper, an electro-thermal model for cylindrical batteries
+is proposed based on an equivalent-circuit electrical model and a
+two-state thermal model. The electrical and the thermal parts are
+coupled through heat generation and temperature dependency of
+the
+electrical
+parameters.
+The
+integrated
+5-state
+model
+is
+computationally efﬁcient for onboard applications and provides
+estimates of the critical battery states. The core temperature of
+cylindrical batteries, which is usually neglected
+by existing
+control-oriented models, is captured. As shown in Figs. 18 and 20,
+the core temperature can be signiﬁcantly higher than the surface
+temperature, especially under high current. Accurate estimation of
+the core temperature can help reduce the risk of overheating.
+Additionally, since the parameters of the electrical model are
+temperature dependent, capturing the temperature close to the
+electrode assembly (core temperature) can also enhance the ac-
+curacy of voltage estimation. Such advantage is desirable espe-
+cially under high current application where the temperature
+swing is large and fast.
+The electrical sub-model is parameterized under isothermal
+conditions. Since the electrical and the thermal dynamics are
+decoupled, the parameters can be identiﬁed separately. Pulse-
+relaxation tests are used to parameterize the electrical model so
+that the SOC dependency of the parameters can be conveniently
+identiﬁed under SOC invariant conditions. The thermal model is
+then parameterized by using the heat generation calculated by the
+measured current, voltage and the electrical model. Such strategy
+greatly reduces the complexity of the parameterization.
+Acknowledgment
+The authors would like to thank the U.S. Army Tank Automotive
+Research, Development, and Engineering Center (TARDEC), and
+Automotive Research Center (ARC), a U.S. Army center of excellence
+in modeling and simulation of ground vehicles, for providing sup-
+port including funding.
+UNCLASSIFIED: Dist A. Approved for public release.
+References
+[1] Y. Hu, S. Yurkovich, Y. Guezennec, B.J. Yurkovich, J. Power Sources 196 (2011)
+449e457.
+[2] G.L. Plett, J. Power Sources 134 (2004) 262e276.
+[3] S. Santhanagopalan, R.E. White, J. Power Sources 16 (2006) 1346e1355.
+[4] K. Smith, G.-H. Kim, E. Darcy, A. Pesaran, Int. J. Energy Res. 34 (2010) 204e215.
+[5] C. Mi, B. Li, D. Buck, N. Ota, in: Proceedings of IEEE Vehicle Power and Pro-
+pulsion Conference, 2007.
+[6] X. Lin, H. Perez, J. Siegel, A. Stefanopoulou, Y. Li, R.D. Anderson, Y. Ding,
+M. Castanier, IEEE Trans. Control Syst. Technol. 21 (2013) 1745e1755.
+[7] M. Debert, G. Colin, G. Bloch, Y. Chamaillard, Control Eng. Pract. 21 (2013)
+1035e1042.
+[8] K. Kutluay, Y. Cadirci, Y.S. Ozkazanc, I. Cadirci, IEEE Trans. Industr. Electron. 52
+(2005) 1315e1327.
+[9] T.F. Fuller, M. Doyle, J. Newman, J. Electrochem. Soc. 141 (1994) 1e10.
+[10] W.B. Gu, C.Y. Wang, J. Electrochem. Soc. 147 (2000) 2910e2922.
+[11] C. Speltino, D. Domenico, G. Fiengo, A. Stefanopoulou, in: Proceedings of IEEE
+Conference on Decision and Control, 2000, pp. 3276e3281.
+[12] J.C. Forman, S.J. Moura, J.L. Stein, H.K. Fathy, J. Power Sources 210 (2012)
+263e275.
+[13] M. Coleman, C.K. Lee, C. Zhu, W.G. Hurley, IEEE Trans. Industr. Electron. 54
+(2007) 2550e2557.
+[14] X. Hu, S. Li, H. Peng, J. Power Sources 198 (2012) 359e367.
+[15] C. Wang, V. Srinivasan, J. Power Sources 110 (2002) 364e376.
+[16] S.A. Hallaj, H. Maleki, J. Hong, J. Selman, J. Power Sources 83 (1999) 1e8.
+[17] K. Smith, C. Wang, J. Power Sources 160 (2006) 662e673.
+[18] D. Bernardi, E. Pawlikowski, J. Newman, J. Electrochem. Soc. 132 (1985) 5e12.
+[19] C. Forgez, D. Do, G. Friedrich, M. Morcrette, C. Delacourt, J. Power Sources 195
+(2010) 2961e2968.
+[20] C. Park, A. Jaura, in: SAE 2003-01-2286.
+[21] M. Muratori, N. Ma, M. Canova, Y. Guezennec, in: Proceedings of the ASME
+Dynamic Systems and Control Conference, 2010.
+[22] L. Cai, R.E. White, J. Electrochem. Soc. 157 (2010) A1188eA1195.
+[23] L. Gao, S. Liu, R. Dougal, IEEE Trans. Compon. Packag. Technol. 25 (2002)
+495e505.
+[24] W. Fang, O.J. Kwon, C.Y. Wang, Int. J. Energy Res. 34 (2010) 107e115.
+[25] L. Lam, P. Bauer, E. Kelder, in: Proceedings of IEEE International Telecom-
+munications Energy Conference, 2011.
+[26] H.E. Perez, J.B. Siegel, X. Lin, A.G. Stefanopoulou, Y. Ding, M.P. Castanier, in:
+ASME Dynamic Systems and Control Conference (DSCC), 2012.
+[27] M.A. Roscher, D.U. Sauer, J. Power Sources 196 (2011) 331e336.
+[28] V. Srinivasan, J. Newman, Electrochem. Solid-State Lett. 9 (2006) A110eA114.
+[29] X. Lin, H. Fu, H.E. Perez, J.B. Siegel, A.G. Stefanopoulou, Y. Ding, M.P. Castanier,
+Oil Gas. Sci. Technol. Rev. IFP Energ. Nouvelles, France 68 (2013) 165e178.
+[30] P.A. Ioannou, J. Sun, Robust Adaptive Control, Prentice Hall, 1996.
+[31] Encyclopedia of Statistics in Behavioral Science, Wiley, 2005.
+[32] T. Lee, Y. Kim, A. Stefanopoulou, Z. Filipi, in: Proceedings of American Control
+Conference, 2011.
+[33] T. Dong, A. Kirchev, F. Mattera, Y. Bultel, ECS Trans. 25 (2010) 131e138.
+[34] J. Illig, M. Ender, T. Chrobak, J.P. Schmidt, D. Klotz, E. Ivers-Tiffe, J. Electrochem.
+Soc. 159 (2012) A952eA960.
+[35] L. Liao, P. Zuo, Y. Ma, X. Chen, Y. An, Y. Gao, G. Yin, Electrochim. Acta 60 (2012)
+269e273.
+[36] D.V. Do, C. Forgez, K.E.K. Benkara, G. Friedrich, IEEE Trans. Veh. Technol. 58
+(2009) 3930e3937.
+[37] G. Prasad, C. Rahn, in: Proceedings of ASME Dynamic Systems and Control
+Conference, 2012.
+Table 3
+Comparison of model performance under drive cycles.
+CS
+CD
+Cycle in Ref. [1]
+DST [14]
+FUDS [14]
+Model description
+2RC&thermal
+2RC&thermal
+2RC þ hysteresis
+1-3RC þ hysteresis
+1-3RC þ hysteresis
+Maximum C-rate
+22
+10
+8.7
+2
+2
+Average net C-rate
+0.027
+4
+0.12
+0.03
+0.07
+Temperature variation (C)
+25e38
+5e23
+5e40
+Constant
+Constant
+SOC variation
+0.30e0.53
+0.25e1
+0.3e0.9
+0.62e0.67
+0.45e0.59
+RMSE VT (mV)
+20.3
+45.4
+26
+w8
+w8
+RMSE Tc (C)
+0.92
+0.56
+
+
+
+RMSE Ts (C)
+0.65
+0.2
+
+
+
+X. Lin et al. / Journal of Power Sources 257 (2014) 1e11
+11

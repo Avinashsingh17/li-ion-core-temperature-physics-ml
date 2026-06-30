@@ -1,0 +1,527 @@
+{
+  "physical_constants": {
+    "cell_mass_kg": 0.048,
+    "c_p_J_kg_K": 900.0,
+    "C_total_J_K": 43.2,
+    "cell_radius_m": 0.009,
+    "cell_length_m": 0.065,
+    "core_node_radius_m": 0.0045
+  },
+  "cal_cycles": [
+    "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+    "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2.parquet",
+    "LG_25degC_UDDS_10-28-18_17.44_551_UDDS_25degC_LGHG2.parquet"
+  ],
+  "val_cycles_same_ambient": [
+    "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2.parquet",
+    "LG_25degC_Mixed2_10-29-18_20.16_551_Mixed2_25degC_LGHG2.parquet"
+  ],
+  "val_cycles_diff_ambient": [
+    "LG_10degC_UDDS_11-20-18_03.10_576_UDDS_10degC_LGHG2.parquet"
+  ],
+  "step2_R_sa_result": {
+    "method": "cooling-tails-free-asymptote",
+    "R_sa_central_K_per_W": 5.206208118768524,
+    "R_sa_low_K_per_W": 4.536572719410156,
+    "R_sa_high_K_per_W": 8.691471128757163,
+    "T_inf_by_ambient_C": {
+      "-20": -20.852250030391158,
+      "-10": -10.85225003039116,
+      "0": -0.6583156517174993,
+      "10": 9.180146631775237,
+      "25": 23.15018338317852,
+      "40": 38.3750821257501
+    },
+    "T_inf_offset_C_mean": -0.8522500303911594,
+    "T_inf_source": {
+      "-20": "fallback: setpoint + cross-ambient mean offset (0 tails at this ambient)",
+      "-10": "fallback: setpoint + cross-ambient mean offset (0 tails at this ambient)",
+      "0": "median of 8 tail(s) at this ambient",
+      "10": "median of 19 tail(s) at this ambient",
+      "25": "median of 1 tail(s) at this ambient",
+      "40": "median of 1 tail(s) at this ambient"
+    },
+    "fallback_ambients": [
+      -20,
+      -10
+    ],
+    "low_confidence_ambients": [
+      25,
+      40
+    ],
+    "n_validation_files_excluded": 5,
+    "validation_files_excluded": [
+      "LG_0degC_LA92_11-30-18_13.24_589_LA92_0degC_LGHG2.parquet",
+      "LG_0degC_US06_11-30-18_19.02_589_US06_0degC_LGHG2.parquet",
+      "LG_10degC_UDDS_11-20-18_03.10_576_UDDS_10degC_LGHG2.parquet",
+      "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2.parquet",
+      "LG_25degC_Mixed2_10-29-18_20.16_551_Mixed2_25degC_LGHG2.parquet"
+    ],
+    "n_tails_used": 29,
+    "per_tail": [
+      {
+        "file_id": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2",
+        "ambient_setpoint_C": 25,
+        "T_inf_C": 23.15018338317852,
+        "T_inf_offset_C": -1.8498166168214816,
+        "dT0_C": 3.58293291023213,
+        "tau_s": 375.4715527623095,
+        "R_sa_K_per_W": 8.691471128757163,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_10degC_Charge10_11-14-18_11.07_571_Charge10",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.204809252655688,
+        "T_inf_offset_C": -0.7951907473443125,
+        "dT0_C": 17.230637065596998,
+        "tau_s": 199.12945688577668,
+        "R_sa_K_per_W": 4.609478168652237,
+        "duration_s": 3667.0
+      },
+      {
+        "file_id": "LG_10degC_Charge11_11-14-18_16.35_571_Charge11",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.237527544789573,
+        "T_inf_offset_C": -0.7624724552104265,
+        "dT0_C": 17.043101203377923,
+        "tau_s": 202.3823819112086,
+        "R_sa_K_per_W": 4.684777359055754,
+        "duration_s": 3660.0
+      },
+      {
+        "file_id": "LG_10degC_Charge12_11-14-18_21.49_571_Charge12",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.217490373613845,
+        "T_inf_offset_C": -0.7825096263861546,
+        "dT0_C": 17.326174181264967,
+        "tau_s": 197.42560200231128,
+        "R_sa_K_per_W": 4.5700370833868345,
+        "duration_s": 3675.0
+      },
+      {
+        "file_id": "LG_10degC_Charge13_11-15-18_13.39_571_Charge13",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.274014262895697,
+        "T_inf_offset_C": -0.7259857371043026,
+        "dT0_C": 16.946904253583135,
+        "tau_s": 207.11012067319857,
+        "R_sa_K_per_W": 4.79421575632404,
+        "duration_s": 3668.0
+      },
+      {
+        "file_id": "LG_10degC_Charge14_11-15-18_18.57_571_Charge14",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.251372863288346,
+        "T_inf_offset_C": -0.7486271367116544,
+        "dT0_C": 17.211990352417544,
+        "tau_s": 195.97994147851875,
+        "R_sa_K_per_W": 4.536572719410156,
+        "duration_s": 3668.0
+      },
+      {
+        "file_id": "LG_10degC_Charge15_11-16-18_00.35_571_Charge15",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.180146631775237,
+        "T_inf_offset_C": -0.8198533682247628,
+        "dT0_C": 17.154202901619158,
+        "tau_s": 198.42003826473086,
+        "R_sa_K_per_W": 4.593056441313214,
+        "duration_s": 3661.0
+      },
+      {
+        "file_id": "LG_10degC_Charge16_11-16-18_04.44_571_Charge16",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.285324055496039,
+        "T_inf_offset_C": -0.714675944503961,
+        "dT0_C": 17.176548667301255,
+        "tau_s": 198.12229220302603,
+        "R_sa_K_per_W": 4.5861641713663435,
+        "duration_s": 3670.0
+      },
+      {
+        "file_id": "LG_10degC_Charge1_11-19-18_20.38_576_Charge1",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.156510931872715,
+        "T_inf_offset_C": -0.8434890681272851,
+        "dT0_C": 17.043369745887997,
+        "tau_s": 215.52290316899638,
+        "R_sa_K_per_W": 4.988956091874916,
+        "duration_s": 3662.0
+      },
+      {
+        "file_id": "LG_10degC_Charge2_11-19-18_23.46_576_Charge2",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.095907378778769,
+        "T_inf_offset_C": -0.9040926212212312,
+        "dT0_C": 17.621663749533166,
+        "tau_s": 226.64221225654532,
+        "R_sa_K_per_W": 5.246347505938549,
+        "duration_s": 3674.0
+      },
+      {
+        "file_id": "LG_10degC_Charge3_11-20-18_07.19_576_Charge3",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.03691482538307,
+        "T_inf_offset_C": -0.9630851746169302,
+        "dT0_C": 17.255754245437007,
+        "tau_s": 223.90877343664837,
+        "R_sa_K_per_W": 5.183073459181675,
+        "duration_s": 3674.0
+      },
+      {
+        "file_id": "LG_10degC_Charge4_11-20-18_12.10_576_Charge4",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.09095361764755,
+        "T_inf_offset_C": -0.9090463823524502,
+        "dT0_C": 17.333878374716807,
+        "tau_s": 216.77682161901257,
+        "R_sa_K_per_W": 5.0179819819215865,
+        "duration_s": 3678.0
+      },
+      {
+        "file_id": "LG_10degC_Charge6_11-13-18_19.44_567_Charge6",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.134271209304234,
+        "T_inf_offset_C": -0.8657287906957656,
+        "dT0_C": 17.378800978813423,
+        "tau_s": 197.7703851720252,
+        "R_sa_K_per_W": 4.578018175278361,
+        "duration_s": 3676.0
+      },
+      {
+        "file_id": "LG_10degC_Charge7_11-14-18_01.08_567_Charge7",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.196555068297473,
+        "T_inf_offset_C": -0.8034449317025274,
+        "dT0_C": 17.53381721697122,
+        "tau_s": 210.9472779748422,
+        "R_sa_K_per_W": 4.883038842010236,
+        "duration_s": 3677.0
+      },
+      {
+        "file_id": "LG_10degC_Charge8_11-14-18_06.42_567_Charge8",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.237153762304214,
+        "T_inf_offset_C": -0.7628462376957863,
+        "dT0_C": 17.424406093799714,
+        "tau_s": 197.41008484919945,
+        "R_sa_K_per_W": 4.569677890027765,
+        "duration_s": 3675.0
+      },
+      {
+        "file_id": "LG_10degC_LA92_11-25-18_20.59_582_LA92_10degC_LGHG2",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.130211726184426,
+        "T_inf_offset_C": -0.8697882738155744,
+        "dT0_C": 1.3539374895214555,
+        "tau_s": 224.90819073080024,
+        "R_sa_K_per_W": 5.206208118768524,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_10degC_Mixed1_11-13-18_23.07_567_Mixed1_10degC_LGHG2",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 8.969177204453922,
+        "T_inf_offset_C": -1.0308227955460776,
+        "dT0_C": 1.7179211989679364,
+        "tau_s": 248.91477884023013,
+        "R_sa_K_per_W": 5.761916176857178,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_10degC_Mixed2_11-14-18_04.32_567_Mixed2_10degC_LGHG2",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.211344223083543,
+        "T_inf_offset_C": -0.7886557769164568,
+        "dT0_C": 2.5911709840679604,
+        "tau_s": 213.59762585270568,
+        "R_sa_K_per_W": 4.94438948733115,
+        "duration_s": 598.0
+      },
+      {
+        "file_id": "LG_10degC_Mixed5_11-14-18_19.56_571_Mixed5_10degC_LGHG2",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.076185181356665,
+        "T_inf_offset_C": -0.9238148186433346,
+        "dT0_C": 2.8950392307903012,
+        "tau_s": 246.05638461960976,
+        "R_sa_K_per_W": 5.695749643972448,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_10degC_US06_11-13-18_18.38_567_US06_10degC_LGHG2",
+        "ambient_setpoint_C": 10,
+        "T_inf_C": 9.094727038332318,
+        "T_inf_offset_C": -0.9052729616676825,
+        "dT0_C": 3.430705409534339,
+        "tau_s": 231.8136723359666,
+        "R_sa_K_per_W": 5.366057229999226,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_HWFET_11-30-18_08.39_589_HWFET_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.5700387520215807,
+        "T_inf_offset_C": -0.5700387520215807,
+        "dT0_C": 2.15325063862176,
+        "tau_s": 229.5472005058434,
+        "R_sa_K_per_W": 5.31359260430193,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed1_11-30-18_23.20_589_Mixed1_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.7684000353492045,
+        "T_inf_offset_C": -0.7684000353492045,
+        "dT0_C": 3.8375524459513293,
+        "tau_s": 256.2551283698933,
+        "R_sa_K_per_W": 5.931831675229012,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed2_01-12-18_04.35_589_Mixed2_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.6853417739799429,
+        "T_inf_offset_C": -0.6853417739799429,
+        "dT0_C": 1.9261833103275354,
+        "tau_s": 290.97283953399034,
+        "R_sa_K_per_W": 6.735482396620147,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed4_01-12-18_14.21_590_Mixed4_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.7155099932399945,
+        "T_inf_offset_C": -0.7155099932399945,
+        "dT0_C": 4.570688428583245,
+        "tau_s": 242.84870102866995,
+        "R_sa_K_per_W": 5.621497708996989,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed5_01-12-18_19.37_590_Mixed5_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.6287885197174735,
+        "T_inf_offset_C": -0.6287885197174735,
+        "dT0_C": 2.4896482644991504,
+        "tau_s": 225.21892572634528,
+        "R_sa_K_per_W": 5.213401058480215,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed6_02-12-18_00.47_590_Mixed6_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.7066259910166142,
+        "T_inf_offset_C": -0.7066259910166142,
+        "dT0_C": 1.4228242083857636,
+        "tau_s": 306.1500313870308,
+        "R_sa_K_per_W": 7.086806282107195,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed7_02-12-18_05.53_590_Mixed7_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.6312895294550557,
+        "T_inf_offset_C": -0.6312895294550557,
+        "dT0_C": 2.3144639326287364,
+        "tau_s": 237.34328974026963,
+        "R_sa_K_per_W": 5.494057632876611,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_0degC_Mixed8_02-12-18_10.57_590_Mixed8_0degC_LGHG2",
+        "ambient_setpoint_C": 0,
+        "T_inf_C": -0.6151189470056981,
+        "T_inf_offset_C": -0.6151189470056981,
+        "dT0_C": 1.4687383323814527,
+        "tau_s": 235.40865517648362,
+        "R_sa_K_per_W": 5.449274425381565,
+        "duration_s": 599.0
+      },
+      {
+        "file_id": "LG_40degC_US06_11-06-18_19.09_556_US06_40degC_LGHG2",
+        "ambient_setpoint_C": 40,
+        "T_inf_C": 38.3750821257501,
+        "T_inf_offset_C": -1.6249178742499026,
+        "dT0_C": 2.5876142560511197,
+        "tau_s": 260.97715442428023,
+        "R_sa_K_per_W": 6.041137833895375,
+        "duration_s": 599.0
+      }
+    ]
+  },
+  "step3_diagnostic_fit": {
+    "split": 0.9034237805103441,
+    "split_ci95": 0.006028127806600442,
+    "R_cs_K_per_W": 1.6147186172995551,
+    "R_cs_ci95_K_per_W": 0.008875837579111392,
+    "R_cs_ci95_pct": 0.5496832379349961,
+    "cal_rmse_C": 0.5544237099602238,
+    "n_residual": 3008,
+    "optimizer_message": "`xtol` termination condition is satisfied."
+  },
+  "step4_R_cs_geometry_anchor": {
+    "method": "geometry + Lin cross-check",
+    "k_radial_range_W_m_K": [
+      0.2,
+      1.0
+    ],
+    "R_cs_low_K_per_W": 1.697196924251166,
+    "R_cs_central_K_per_W": 3.394393848502332,
+    "R_cs_high_K_per_W": 8.485984621255831,
+    "R_cs_lin_cross_check_K_per_W": 3.1237248712611145
+  },
+  "step4_central_fit": {
+    "split": 0.9282698890836659,
+    "split_ci95": 0.003385835796095239,
+    "C_core_J_K": 40.10125920841437,
+    "C_surf_J_K": 3.0987407915856324,
+    "R_cs_K_per_W": 3.394393848502332,
+    "R_sa_K_per_W": 5.206208118768524,
+    "cal_rmse_C": 0.5399730462288875
+  },
+  "step5_band_stats": {
+    "central_core_surface_gap_max_C": 3.363158538328314,
+    "central_core_surface_gap_mean_C": 1.840870452295196,
+    "T_core_band_spread_max_C": 5.068615596406346,
+    "T_core_band_spread_at_peak_C": 5.013126529232579
+  },
+  "step5_band_per_point": {
+    "low": {
+      "R_cs_K_per_W": 1.697196924251166,
+      "split": 0.9500281272456831,
+      "split_ci95": 0.008002564477511057,
+      "cal_rmse_C": 0.5672497153393758
+    },
+    "central": {
+      "R_cs_K_per_W": 3.394393848502332,
+      "split": 0.9282698890836659,
+      "split_ci95": 0.003385835796095239,
+      "cal_rmse_C": 0.5399730462288875
+    },
+    "high": {
+      "R_cs_K_per_W": 8.485984621255831,
+      "split": 0.93,
+      "split_ci95": 0.003387512495927325,
+      "cal_rmse_C": 0.518724001905412
+    }
+  },
+  "step6_validation_per_cycle": [
+    {
+      "file_id": "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2",
+      "ambient_setpoint_C": 25,
+      "T_inf_used_C": 23.15018338317852,
+      "n_samples": 7723,
+      "duration_min": 128.7,
+      "soc_clamp_low": 0,
+      "soc_clamp_high": 0,
+      "model_rmse_C": 0.382905029559964,
+      "model_mae_C": 0.31147284168899136,
+      "model_max_abs_err_C": 1.131102282768584,
+      "baseline_nominal_rmse_C": 0.9182288595334245,
+      "baseline_nominal_mae_C": 0.8482185842591032,
+      "baseline_nominal_max_abs_err_C": 1.4444899999999983,
+      "baseline_T_inf_rmse_C": 1.1596680302994689,
+      "baseline_T_inf_mae_C": 1.060512480590964,
+      "baseline_T_inf_max_abs_err_C": 2.7188166168214813,
+      "core_surface_gap_max_C": 2.4613072907073494,
+      "core_surface_gap_mean_C": 0.689382836001064,
+      "peak_excursion_T_s_from_T_inf_C": 2.7188166168214813,
+      "margin_vs_nominal_C": 0.5353238299734604,
+      "margin_vs_T_inf_C": 0.7767630007395048
+    },
+    {
+      "file_id": "LG_25degC_Mixed2_10-29-18_20.16_551_Mixed2_25degC_LGHG2",
+      "ambient_setpoint_C": 25,
+      "T_inf_used_C": 23.15018338317852,
+      "n_samples": 7917,
+      "duration_min": 131.93333333333334,
+      "soc_clamp_low": 0,
+      "soc_clamp_high": 17,
+      "model_rmse_C": 0.37971071419999597,
+      "model_mae_C": 0.32414219779057585,
+      "model_max_abs_err_C": 1.228109151439675,
+      "baseline_nominal_rmse_C": 0.8263830240555256,
+      "baseline_nominal_mae_C": 0.7763304061596646,
+      "baseline_nominal_max_abs_err_C": 1.3393300000000004,
+      "baseline_T_inf_rmse_C": 1.2320190495081857,
+      "baseline_T_inf_mae_C": 1.15059609505702,
+      "baseline_T_inf_max_abs_err_C": 3.0342866168214826,
+      "core_surface_gap_max_C": 2.5263425720625925,
+      "core_surface_gap_mean_C": 0.6430278053210646,
+      "peak_excursion_T_s_from_T_inf_C": 3.0342866168214826,
+      "margin_vs_nominal_C": 0.4466723098555296,
+      "margin_vs_T_inf_C": 0.8523083353081897
+    },
+    {
+      "file_id": "LG_10degC_UDDS_11-20-18_03.10_576_UDDS_10degC_LGHG2",
+      "ambient_setpoint_C": 10,
+      "T_inf_used_C": 9.180146631775237,
+      "n_samples": 14892,
+      "duration_min": 248.18333333333334,
+      "soc_clamp_low": 0,
+      "soc_clamp_high": 0,
+      "model_rmse_C": 0.4675399546426656,
+      "model_mae_C": 0.4488695978747823,
+      "model_max_abs_err_C": 0.9910253925193775,
+      "baseline_nominal_rmse_C": 0.7593350296896914,
+      "baseline_nominal_mae_C": 0.746389048159777,
+      "baseline_nominal_max_abs_err_C": 1.0615199999999998,
+      "baseline_T_inf_rmse_C": 0.15828507011662224,
+      "baseline_T_inf_mae_C": 0.11036218811143776,
+      "baseline_T_inf_max_abs_err_C": 0.9150733682247623,
+      "core_surface_gap_max_C": 1.054875225351969,
+      "core_surface_gap_mean_C": 0.34077951309574783,
+      "peak_excursion_T_s_from_T_inf_C": 0.9150733682247623,
+      "margin_vs_nominal_C": 0.29179507504702573,
+      "margin_vs_T_inf_C": -0.3092548845260434
+    },
+    {
+      "file_id": "LG_0degC_US06_11-30-18_19.02_589_US06_0degC_LGHG2",
+      "ambient_setpoint_C": 0,
+      "T_inf_used_C": -0.6583156517174993,
+      "n_samples": 3381,
+      "duration_min": 56.333333333333336,
+      "soc_clamp_low": 0,
+      "soc_clamp_high": 0,
+      "model_rmse_C": 3.6115057262990686,
+      "model_mae_C": 3.38984674923468,
+      "model_max_abs_err_C": 5.8095015862391595,
+      "baseline_nominal_rmse_C": 1.9939189025332265,
+      "baseline_nominal_mae_C": 1.7798961030696523,
+      "baseline_nominal_max_abs_err_C": 3.89087,
+      "baseline_T_inf_rmse_C": 2.5917916542882318,
+      "baseline_T_inf_mae_C": 2.411495821473768,
+      "baseline_T_inf_max_abs_err_C": 4.549185651717499,
+      "core_surface_gap_max_C": 6.686390045034171,
+      "core_surface_gap_mean_C": 3.7875615707183647,
+      "peak_excursion_T_s_from_T_inf_C": 4.549185651717499,
+      "margin_vs_nominal_C": -1.6175868237658422,
+      "margin_vs_T_inf_C": -1.0197140720108369
+    },
+    {
+      "file_id": "LG_0degC_LA92_11-30-18_13.24_589_LA92_0degC_LGHG2",
+      "ambient_setpoint_C": 0,
+      "T_inf_used_C": -0.6583156517174993,
+      "n_samples": 8167,
+      "duration_min": 136.1,
+      "soc_clamp_low": 0,
+      "soc_clamp_high": 0,
+      "model_rmse_C": 1.036994933831176,
+      "model_mae_C": 0.9748414589060641,
+      "model_max_abs_err_C": 2.0175808224981804,
+      "baseline_nominal_rmse_C": 0.3533729204764911,
+      "baseline_nominal_mae_C": 0.2508445076131291,
+      "baseline_nominal_max_abs_err_C": 1.47222,
+      "baseline_T_inf_rmse_C": 0.8489311996431046,
+      "baseline_T_inf_mae_C": 0.7817995466736438,
+      "baseline_T_inf_max_abs_err_C": 2.1305356517174996,
+      "core_surface_gap_max_C": 2.794036964314301,
+      "core_surface_gap_mean_C": 1.1444816372135231,
+      "peak_excursion_T_s_from_T_inf_C": 2.1305356517174996,
+      "margin_vs_nominal_C": -0.6836220133546849,
+      "margin_vs_T_inf_C": -0.18806373418807132
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Runtime dependencies for the Li-ion core-temperature physics-ML pipeline.
+# Python >= 3.10. Versions intentionally unpinned.
+
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+
+# Parquet engine for pandas read_parquet/to_parquet (all data/ interchange is parquet).
+pyarrow
