@@ -150,4 +150,10 @@ The lesson I'll carry forward is narrower and more useful than "physics-informed
 
 So the one-sentence version, the one I'd open a talk with: I built a careful estimator of a quantity I can't measure, and the most valuable thing it produces is an honest account of how much it can't know. The fever analogy from the start still holds. You can get very good at reading the skin — but past a point, the limit isn't your skill with the thermometer you have. It's the thermometer you don't.
 
-<!-- Repo / reproduction pointers to follow -->
+## Code and data
+
+The full pipeline, the locked `2026-06-18b` calibration, the figures, and the working notes behind this write-up are public at **[github.com/Avinashsingh17/li-ion-core-temperature-physics-ml](https://github.com/Avinashsingh17/li-ion-core-temperature-physics-ml)**. The repository's README walks through reproduction end to end, so I'll only flag the two things worth knowing before you clone.
+
+**The raw data isn't mine to redistribute.** The drive cycles come from the LG 18650HG2 dataset (Kollmeyer et al., McMaster, on Mendeley Data); the repository carries the code and the model-derived artifacts but not the source data, which you download from Mendeley and place as the README describes.
+
+**Reproduction has two honest modes.** The default path regenerates the published figures from the committed locked calibration — and the figure script refuses to run if that calibration drifts, so the numbers in this write-up can only ever come from the run that produced them. The second path re-derives the calibration from scratch, which is there for anyone who wants to check the physics rather than take it on trust; it may not land bit-for-bit on the locked parameters, and the same guard will say so. That split is the reproducibility version of the argument the whole write-up makes: be explicit about what's fixed, what's free, and how you'd know the difference.

@@ -225,3 +225,6 @@ Created top-level README.md (project framing, pipeline summary, reproduce steps,
 
 ## [2026-06-29] writeup | clarification — writeup.md repro block still pending
 The earlier [2026-06-29] README entry created the repository's own README.md (a repo artifact). It did NOT fill the `<!-- Repo / reproduction pointers to follow -->` placeholder in report/writeup.md, which remains the final outstanding writeup task and will be drafted once the GitHub repo (li-ion-core-temperature-physics-ml) is live and its URL is known.
+
+## [2026-06-29] query | writeup complete — Code-and-data block filed
+report/writeup.md now carries TL;DR + §1–6 + the Code-and-data block. Repo live and verified at github.com/Avinashsingh17/li-ion-core-temperature-physics-ml. Writeup is feature-complete.
