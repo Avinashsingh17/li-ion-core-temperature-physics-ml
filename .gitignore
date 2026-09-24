@@ -31,3 +31,6 @@ venv/
 
 # Claude Code local tooling state — machine-specific, not part of the project
 .claude/
+
+# Scratch note from a working session — not part of the project
+Claude resume.txt

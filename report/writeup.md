@@ -169,3 +169,9 @@ The full pipeline, the locked `2026-06-18b` calibration, the figures, and the wo
 **The raw data isn't mine to redistribute.** The drive cycles come from the LG 18650HG2 dataset (Kollmeyer et al., McMaster, on Mendeley Data); the repository carries the code and the model-derived artifacts but not the source data, which you download from Mendeley and place as the README describes.
 
 **Reproduction has two honest modes.** The default path regenerates the published figures from the committed locked calibration — and the figure script refuses to run if that calibration drifts, so the numbers in this write-up can only ever come from the run that produced them. The second path re-derives the calibration from scratch, which is there for anyone who wants to check the physics rather than take it on trust; it may not land bit-for-bit on the locked parameters, and the same guard will say so. That split is the reproducibility version of the argument the whole write-up makes: be explicit about what's fixed, what's free, and how you'd know the difference.
+
+## Part 2
+
+Part 1 left one parameter unidentified. Part 2 audits all four.
+[Part 2, Phase A: identifiability audit](part2_phase_a.md), which also
+corrects the parameter confidence intervals reported in Section 5.

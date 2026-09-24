@@ -1,0 +1,132 @@
+{
+  "analysis": "phase_a_split_refit_diagnostic",
+  "diagnostic_only": true,
+  "locked_run_untouched": true,
+  "solver": {
+    "rtol": 1e-10,
+    "atol": 1e-12,
+    "max_step": 5,
+    "stride": 10,
+    "note": "only difference vs calibrate.step4_central_fit"
+  },
+  "optimizer": {
+    "p0": 0.93,
+    "bounds": [
+      [
+        0.5
+      ],
+      [
+        0.99
+      ]
+    ],
+    "method": "trf",
+    "max_nfev": 80,
+    "x_scale": "jac",
+    "ftol": 1e-10,
+    "xtol": 1e-10,
+    "gtol": 1e-10
+  },
+  "fits": [
+    {
+      "name": "low",
+      "R_cs": 1.697196924251166,
+      "diff_step": 0.02,
+      "split": 0.9899999992663363,
+      "nfev": 8,
+      "status": 3,
+      "message": "`xtol` termination condition is satisfied.",
+      "cost": 495.0270387916776,
+      "rmse_C": 0.5737075198614101,
+      "jac_norm": 15.54549208992488,
+      "ci95": 0.07234596960512976,
+      "wall_s": 1448.6170768737793,
+      "equals_p0_1e12": false
+    },
+    {
+      "name": "central",
+      "R_cs": 3.394393848502332,
+      "diff_step": 0.02,
+      "split": 0.9899999999999995,
+      "nfev": 6,
+      "status": 1,
+      "message": "`gtol` termination condition is satisfied.",
+      "cost": 467.9455299628735,
+      "rmse_C": 0.5577938651383261,
+      "jac_norm": 19.67478251223246,
+      "ci95": 0.05557661175514836,
+      "wall_s": 1367.044674396515,
+      "equals_p0_1e12": false
+    },
+    {
+      "name": "high",
+      "R_cs": 8.485984621255831,
+      "diff_step": 0.02,
+      "split": 0.9899999999999999,
+      "nfev": 6,
+      "status": 1,
+      "message": "`gtol` termination condition is satisfied.",
+      "cost": 429.0782084981643,
+      "rmse_C": 0.5341267284393789,
+      "jac_norm": 19.86596325598139,
+      "ci95": 0.05270635181398867,
+      "wall_s": 1399.053905248642,
+      "equals_p0_1e12": false
+    },
+    {
+      "name": "central",
+      "R_cs": 3.394393848502332,
+      "diff_step": 0.005,
+      "split": 0.9899999964699341,
+      "nfev": 11,
+      "status": 3,
+      "message": "`xtol` termination condition is satisfied.",
+      "cost": 467.9450066112003,
+      "rmse_C": 0.5577935532190795,
+      "jac_norm": 20.784801742592776,
+      "ci95": 0.05260849495356087,
+      "wall_s": 1716.7488641738892,
+      "equals_p0_1e12": false
+    }
+  ],
+  "locked_band_per_point": {
+    "low": {
+      "R_cs_K_per_W": 1.697196924251166,
+      "split": 0.9500281272456831,
+      "split_ci95": 0.008002564477511057,
+      "cal_rmse_C": 0.5672497153393758
+    },
+    "central": {
+      "R_cs_K_per_W": 3.394393848502332,
+      "split": 0.9282698890836659,
+      "split_ci95": 0.003385835796095239,
+      "cal_rmse_C": 0.5399730462288875
+    },
+    "high": {
+      "R_cs_K_per_W": 8.485984621255831,
+      "split": 0.93,
+      "split_ci95": 0.003387512495927325,
+      "cal_rmse_C": 0.518724001905412
+    }
+  },
+  "band": {
+    "new_splits": {
+      "spread_max": 5.017744274747855,
+      "at_peak": 4.907475601176063
+    },
+    "locked_splits_tight": {
+      "spread_max": 5.065808190725363,
+      "at_peak": 5.010435877793501
+    },
+    "locked_json": {
+      "spread_max": 5.068615596406346,
+      "at_peak": 5.013126529232579
+    }
+  },
+  "central_gap": {
+    "max_locked": 3.3593878010448535,
+    "max_new": 3.189782419123979,
+    "max_abs_pointwise_delta": 0.2900264500487566,
+    "threshold_C": 0.05,
+    "exceeds": true
+  }
+}

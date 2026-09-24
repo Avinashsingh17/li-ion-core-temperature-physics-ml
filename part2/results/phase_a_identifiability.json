@@ -1,0 +1,436 @@
+{
+  "analysis": "phase_a_identifiability",
+  "locked_run": "2026-06-18b",
+  "read_only": true,
+  "cycle": {
+    "file_id": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2",
+    "parquet": "data/processed/LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+    "ambient_setpoint_C": 25,
+    "T_inf_C": 23.15018338317852,
+    "n_samples": 4016,
+    "duration_s": 4015.0,
+    "grid_hz": 1.0
+  },
+  "forward_sim": {
+    "entry_point": "calibrate.precompute_cycle + calibrate.simulate_T",
+    "why_not_thermal_model_simulate_cycle": "thermal_model.simulate_cycle exposes no rtol/atol (hardcoded 1e-6/1e-8) and integrates a different trajectory: raw T_ambient_C column as sink and y0 = T_amb(0), whereas the locked run used T_inf and y0 = T_surf_measured[0].",
+    "method": "RK45",
+    "rtol": 1e-10,
+    "atol": 1e-12,
+    "max_step_s": 5.0,
+    "workers": 12,
+    "workers_note": "Independent simulations only; --workers 1 is bit-identical."
+  },
+  "locked_parameters": {
+    "nominal": {
+      "C_core": 40.10125920841437,
+      "C_surf": 3.0987407915856324,
+      "R_cs": 3.394393848502332,
+      "R_sa": 5.206208118768524
+    },
+    "units": {
+      "C_core": "J/K",
+      "C_surf": "J/K",
+      "R_cs": "K/W",
+      "R_sa": "K/W"
+    },
+    "C_total_J_K": 43.2,
+    "split": 0.9282698890836659,
+    "cal_rmse_C": 0.5399730462288875,
+    "note_C_constraint": "C_core + C_surf == C_total exactly in the locked parameterization (C_core = split * C_total). The FIM below treats all four parameters as independent, which frees a direction the locked fit never had."
+  },
+  "assumptions": {
+    "THERMOCOUPLE_SIGMA_K": 0.5,
+    "is_measurement": false,
+    "note": "Assumed iid Gaussian surface-temperature measurement noise. Not measured in this project. Every CRB value scales linearly with this constant."
+  },
+  "step1_determinism": {
+    "n_samples": 4016,
+    "max_abs_diff_K": 0.0,
+    "tolerance_K": 1e-09,
+    "bitwise_identical": true,
+    "passed": true,
+    "rtol": 1e-10,
+    "atol": 1e-12,
+    "max_step_s": 5.0
+  },
+  "step2_h_sweep": {
+    "reference_h": 0.01,
+    "norm_rtol": 0.01,
+    "cosine_tol": 1e-05,
+    "cosine_tol_original_a_priori": 1e-06,
+    "cosine_tol_note": "Loosened from 1e-6 to 1e-5 AFTER inspecting the sweep. The 1e-6 value rejected 3 of 4 step sizes on direction alone while every step size agreed in magnitude to 6.8e-4. The residual direction disagreement is concentrated in C_surf (the weakest column) and shrinks as h grows, which identifies it as FD roundoff rather than curvature. 1e-5 sits in the 26x gap between the h=0.001 outlier (1.2e-4) and the next-worst value (4.6e-6).",
+    "min_consistent_required": 3,
+    "n_consistent": 3,
+    "n_consistent_norm_only": 4,
+    "worst_rel_norm_dev_all_h": 0.0006772392174311535,
+    "stable": true,
+    "per_h": [
+      {
+        "h": 0.001,
+        "column_norms_K": {
+          "C_core": 39.119483650303096,
+          "C_surf": 3.1981515367974516,
+          "R_cs": 16.696247407960335,
+          "R_sa": 180.27612185058203
+        },
+        "rel_norm_dev_vs_h_ref": {
+          "C_core": 0.0002500181686790476,
+          "C_surf": 0.00046052450544485353,
+          "R_cs": 0.0001394810084505452,
+          "R_sa": 2.9160433818876254e-05
+        },
+        "one_minus_cosine_vs_h_ref": {
+          "C_core": 9.52158107803136e-07,
+          "C_surf": 0.0001199570395834515,
+          "R_cs": 3.189043694118432e-06,
+          "R_sa": 1.5348032400552825e-08
+        },
+        "consistent_with_ref": false
+      },
+      {
+        "h": 0.005,
+        "column_norms_K": {
+          "C_core": 39.10633315567129,
+          "C_surf": 3.1984510688625183,
+          "R_cs": 16.695180431117297,
+          "R_sa": 180.27585964396158
+        },
+        "rel_norm_dev_vs_h_ref": {
+          "C_core": 8.622815328108376e-05,
+          "C_surf": 0.0003669097658786361,
+          "R_cs": 0.0002033772837012073,
+          "R_sa": 2.7705919134318074e-05
+        },
+        "one_minus_cosine_vs_h_ref": {
+          "C_core": 3.111070934203042e-08,
+          "C_surf": 4.629254520049919e-06,
+          "R_cs": 1.8660255007851845e-07,
+          "R_sa": 8.910315818511094e-10
+        },
+        "consistent_with_ref": true
+      },
+      {
+        "h": 0.01,
+        "column_norms_K": {
+          "C_core": 39.10970551335307,
+          "C_surf": 3.1996250425377752,
+          "R_cs": 16.698576542256138,
+          "R_sa": 180.27086507395157
+        },
+        "rel_norm_dev_vs_h_ref": {
+          "C_core": 0.0,
+          "C_surf": 0.0,
+          "R_cs": 0.0,
+          "R_sa": 0.0
+        },
+        "one_minus_cosine_vs_h_ref": {
+          "C_core": 0.0,
+          "C_surf": -1.5543122344752192e-15,
+          "R_cs": 6.661338147750939e-16,
+          "R_sa": -2.220446049250313e-15
+        },
+        "consistent_with_ref": true
+      },
+      {
+        "h": 0.05,
+        "column_norms_K": {
+          "C_core": 39.136192139708896,
+          "C_surf": 3.199290078321641,
+          "R_cs": 16.698609252697086,
+          "R_sa": 180.26782309697606
+        },
+        "rel_norm_dev_vs_h_ref": {
+          "C_core": 0.0006772392174311535,
+          "C_surf": 0.00010468858434375413,
+          "R_cs": 1.9588760074911854e-06,
+          "R_sa": 1.6874479269082125e-05
+        },
+        "one_minus_cosine_vs_h_ref": {
+          "C_core": 4.890623175324293e-07,
+          "C_surf": 1.2111399688707891e-06,
+          "R_cs": 5.52958649979729e-08,
+          "R_sa": 3.751250199357514e-09
+        },
+        "consistent_with_ref": true
+      }
+    ]
+  },
+  "step2_h_used": 0.01,
+  "step3_fisher": {
+    "sigma_K": 0.5,
+    "sigma_is_assumption": true,
+    "n_samples": 4016,
+    "param_names": [
+      "C_core",
+      "C_surf",
+      "R_cs",
+      "R_sa"
+    ],
+    "FIM": [
+      [
+        6118.276261364797,
+        325.65396517936347,
+        2580.1559215541884,
+        -5507.094893047385
+      ],
+      [
+        325.65396517936347,
+        40.950401651339504,
+        151.91395505120587,
+        -67.07659993299424
+      ],
+      [
+        2580.1559215541884,
+        151.91395505120587,
+        1115.3698341503468,
+        -2325.4783618906445
+      ],
+      [
+        -5507.094893047385,
+        -67.07659993299424,
+        -2325.4783618906445,
+        129990.33917804365
+      ]
+    ],
+    "FIM_condition_number": 13104.053570400298,
+    "near_singular": false,
+    "singular_threshold": 1000000000000.0,
+    "inverse_method": "inv",
+    "covariance_relative": [
+      [
+        0.008575728028587198,
+        0.011070310819646847,
+        -0.021373600892252424,
+        -1.333898781405167e-05
+      ],
+      [
+        0.011070310819646847,
+        0.0648937638269145,
+        -0.034693605554279965,
+        -0.00011817127254140785
+      ],
+      [
+        -0.021373600892252424,
+        -0.034693605554279965,
+        0.055198437338094083,
+        6.4075486477132e-05
+      ],
+      [
+        -1.333898781405167e-05,
+        -0.00011817127254140785,
+        6.4075486477132e-05,
+        8.213076181198996e-06
+      ]
+    ],
+    "crb_rel_std_error": {
+      "C_core": 0.09260522678870345,
+      "C_surf": 0.254742544202798,
+      "R_cs": 0.23494347690049638,
+      "R_sa": 0.002865846503425994
+    },
+    "crb_rel_std_error_pct": {
+      "C_core": 9.260522678870345,
+      "C_surf": 25.474254420279802,
+      "R_cs": 23.49434769004964,
+      "R_sa": 0.2865846503425994
+    },
+    "crb_rel_ci95_pct": {
+      "C_core": 18.150290928602256,
+      "C_surf": 49.928621196758684,
+      "R_cs": 46.0480753127591,
+      "R_sa": 0.5616955931934993
+    },
+    "correlation_matrix": [
+      [
+        1.0,
+        0.4692700454071717,
+        -0.9823783989031935,
+        -0.050261384853254994
+      ],
+      [
+        0.4692700454071717,
+        1.0,
+        -0.5796749897706179,
+        -0.16186669701214418
+      ],
+      [
+        -0.9823783989031935,
+        -0.5796749897706179,
+        1.0,
+        0.0951646369258298
+      ],
+      [
+        -0.050261384853254994,
+        -0.16186669701214418,
+        0.0951646369258298,
+        1.0
+      ]
+    ],
+    "eigenvalues": [
+      9.942020120292124,
+      35.78949240681875,
+      6938.439908335554,
+      130280.7642543474
+    ],
+    "eigenvectors_columns": [
+      [
+        -0.2388087340166347,
+        -0.31188472570094805,
+        -0.918531766201678,
+        -0.044695647553676006
+      ],
+      [
+        -0.7139384985996265,
+        0.6983144121137261,
+        -0.051462431909538656,
+        -0.0006481925081753128
+      ],
+      [
+        0.6582252995829456,
+        0.6442694604587799,
+        -0.38897301214465313,
+        -0.018876258427166837
+      ],
+      [
+        0.0012898696151849237,
+        -0.0013274143504157032,
+        -0.04848719834654699,
+        0.9988220891650427
+      ]
+    ],
+    "smallest_eigenvalue": 9.942020120292124,
+    "smallest_eigenvector": {
+      "C_core": 0.2388087340166347,
+      "C_surf": 0.7139384985996265,
+      "R_cs": -0.6582252995829456,
+      "R_sa": -0.0012898696151849237
+    },
+    "largest_eigenvalue": 130280.7642543474
+  },
+  "step4_week2_reference": {
+    "source_of_record": "data/calibration/calibration_results.json",
+    "locked_run": "2026-06-18b",
+    "week2_diagnostic_fit": {
+      "R_cs_K_per_W": 1.6147186172995551,
+      "R_cs_ci95_K_per_W": 0.008875837579111392,
+      "R_cs_ci95_pct": 0.5496832379349961,
+      "split": 0.9034237805103441,
+      "n_residual": 3008,
+      "n_free_params": 2,
+      "free_params": [
+        "split",
+        "R_cs"
+      ]
+    },
+    "band_sweep": {
+      "T_core_band_spread_max_C": 5.068615596406346,
+      "T_core_band_spread_at_peak_C": 5.013126529232579
+    },
+    "knowledge_citations": {
+      "R_cs_ci": [
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 139,
+          "text": "| Step 3 diagnostic fit | `split = 0.903 \u00b1 0.006`, `R_cs = 1.62 \u00b1 0.009 K/W` (\u00b10.5 % local CI). Cost dropped 10 % from initial \u2014 the optimizer moved this time, in contrast to the 2026-06-18a run where the biased T_inf ha"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 97,
+          "text": "**Results after the fix**: R_sa re-anchored at **5.22 K/W** (was 2.35 \u2014 the previous setpoint-forced exponential was over-confined); central params **C_core = 40.16 J/K, C_surf = 3.04 J/K, R_cs = 3.39, R_sa = 5.22** (the"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 103,
+          "text": "`report-notes.md` updates: (a) **R_cs unidentifiability** entry refreshed with the new numbers (R_cs CI \u00b10.4 % local vs 5.06 \u00b0C T_core band spread) AND explicitly clarifies that the band sweep is a **sensitivity/identifi"
+        }
+      ],
+      "band_spread": [
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 106,
+          "text": "band spread 5.05 \u00b0C). US06 is the most aggressive 25 \u00b0C cycle (peak |I| \u2248"
+        },
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 141,
+          "text": "| Step 5 band sweep | splits stable 0.93 \u2192 0.95 across R_cs \u2208 [1.70, 8.49] K/W; cal RMSE varies 0.52 \u2192 0.57 \u00b0C; **T_core peak spreads 5.07 \u00b0C** \u2014 R_cs unidentifiability still holds. |"
+        },
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 172,
+          "text": "R_cs label band T_core peak spread: **5.07 \u00b0C** (unidentifiability conclusion unchanged)."
+        },
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 210,
+          "text": "| Step 5 band sweep | split stable 0.92 \u2192 0.96 across R_cs \u2208 [1.70, 8.49] K/W. Cal RMSE varies 0.82 \u2192 0.92 \u00b0C across the 5\u00d7 R_cs spread. **T_core peak spreads 5.09 \u00b0C** \u2014 R_cs unidentifiability still holds. |"
+        },
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 272,
+          "text": "The splits are now stable (~0.93 across the band \u2014 previously they scattered 0.87 \u2192 0.99 because the fit was compensating for the biased target). Cal surface RMSE varies by 0.068 \u00b0C across a 5\u00d7 R_cs spread, and **T_core "
+        },
+        {
+          "file": "knowledge/decisions/calibration-constrained-fit.md",
+          "line": 288,
+          "text": "**Label-band on T_core**: peak spread ~5.06 \u00b0C across the R_cs band (down marginally from 5.7 \u00b0C). This remains the headline uncertainty that propagates into the Week-3 ML stage."
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 97,
+          "text": "**Results after the fix**: R_sa re-anchored at **5.22 K/W** (was 2.35 \u2014 the previous setpoint-forced exponential was over-confined); central params **C_core = 40.16 J/K, C_surf = 3.04 J/K, R_cs = 3.39, R_sa = 5.22** (the"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 106,
+          "text": "Two integrity checks applied to `calibrate.py`: (a) LEAKAGE FILTER \u2014 validation files (Mixed1, Mixed2 @ 25 \u00b0C; UDDS @ 10 \u00b0C) excluded from the cooling-tail pool. The 25 \u00b0C tail count dropped from 2 \u2192 1 (only US06 retaine"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 120,
+          "text": "The previous (2026-06-18a) \"model loses to T_inf everywhere\" framing is superseded \u2014 the 25 \u00b0C losses there were largely an artifact of the warm-ambient T_inf fallback bias. The honest characterization is regime-dependen"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 132,
+          "text": "Wrote `generate_labels.py` \u2014 modular script that produces the modeled core-temperature labels (`T_core_model_C`) plus R_cs band (`T_core_model_lo_C` / `T_core_model_hi_C`) plus `T_surf_model_C` sanity column for the ML s"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 200,
+          "text": "**Generated (7)**: F1 two-state schematic (matplotlib patches; locked central params; T_core labeled model-derived); F2 R_cs band sweep on US06 @ 25 \u00b0C (peak band spread 5.05 \u00b0C \u2014 the headline physical-uncertainty figure"
+        },
+        {
+          "file": "knowledge/log.md",
+          "line": 207,
+          "text": "**F2 cosmetic**: legend moved from lower-right to upper-left per spec (no longer overlapping the dashed measured-surface trace at the cooling tail); explicit ylim with 1.5 \u00b0C headroom so the legend sits above the band's "
+        },
+        {
+          "file": "knowledge/report-notes.md",
+          "line": 112,
+          "text": "- The label band (T_core peak spread = 5.06 \u00b0C) is the quantified uncertainty that propagates into the ML-stage core-temperature labels."
+        }
+      ]
+    }
+  },
+  "step4_comparison": {
+    "crb_R_cs_rel_std_error_pct_1sigma": 23.49434769004964,
+    "crb_R_cs_rel_ci95_pct": 46.0480753127591,
+    "week2_R_cs_empirical_ci95_pct": 0.5496832379349961,
+    "week2_R_cs_empirical_ci95_K_per_W": 0.008875837579111392,
+    "ratio_crb95_over_week2_95": 83.77202020157765,
+    "ratio_crb1sigma_over_week2_95": 42.74161202060888,
+    "disagreement_factor_like_for_like_95": 83.77202020157765,
+    "disagreement_factor_1sigma_vs_95": 42.74161202060888,
+    "disagree_beyond_factor_2": true,
+    "operating_point_locked_R_cs_K_per_W": 3.394393848502332,
+    "operating_point_week2_R_cs_K_per_W": 1.6147186172995551,
+    "operating_point_ratio": 2.1021581172942034,
+    "crb_n_free_params": 4,
+    "week2_n_free_params": 2
+  },
+  "outputs": {
+    "figure": "part2/figures/sensitivity_traces.png"
+  }
+}

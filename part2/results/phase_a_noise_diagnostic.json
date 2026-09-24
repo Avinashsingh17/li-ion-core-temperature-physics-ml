@@ -1,0 +1,139 @@
+{
+  "analysis": "phase_a_noise_diagnostic",
+  "locked_run": "2026-06-18b",
+  "read_only": true,
+  "part1_week2_crb": {
+    "operating_point": {
+      "split": 0.9034237805103441,
+      "params": {
+        "C_core": 39.02790731804687,
+        "C_surf": 4.172092681953135,
+        "R_cs": 1.6147186172995551,
+        "R_sa": 5.206208118768524
+      },
+      "sigma_K": 0.5544237099602238,
+      "reported_ci95_pct_R_cs": 0.5496832379349961,
+      "reported_ci95_abs_R_cs": 0.008875837579111392,
+      "reported_ci95_abs_split": 0.006028127806600442,
+      "reported_ci95_pct_split": 0.667253611942244,
+      "reported_n_residual": 3008
+    },
+    "cal_cycles": [
+      "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2",
+      "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2",
+      "LG_25degC_UDDS_10-28-18_17.44_551_UDDS_25degC_LGHG2"
+    ],
+    "per_cycle": {
+      "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2": {
+        "n_full": 4016,
+        "n_stride10": 402
+      },
+      "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2": {
+        "n_full": 10084,
+        "n_stride10": 1009
+      },
+      "LG_25degC_UDDS_10-28-18_17.44_551_UDDS_25degC_LGHG2": {
+        "n_full": 15966,
+        "n_stride10": 1597
+      }
+    },
+    "h": 0.01,
+    "stride": 10,
+    "chain_rule_dlnCsurf_dlnsplit": -9.354515897229838,
+    "full_1Hz": {
+      "labels": [
+        "split",
+        "R_cs"
+      ],
+      "n_samples": 30066,
+      "sigma_K": 0.5544237099602238,
+      "FIM_condition_number": 6.30078401211417,
+      "crb_rel_std_error_pct": {
+        "split": 1.8357414204786773,
+        "R_cs": 4.588621363249339
+      },
+      "crb_rel_ci95_pct": {
+        "split": 3.597987069066607,
+        "R_cs": 8.99353261065979
+      },
+      "ratio_vs_week2_reported": 16.361300454505287
+    },
+    "stride10": {
+      "labels": [
+        "split",
+        "R_cs"
+      ],
+      "n_samples": 3008,
+      "sigma_K": 0.5544237099602238,
+      "FIM_condition_number": 6.330315664354725,
+      "crb_rel_std_error_pct": {
+        "split": 5.7795199375396775,
+        "R_cs": 14.489226170621947
+      },
+      "crb_rel_ci95_pct": {
+        "split": 11.32765092550895,
+        "R_cs": 28.39836145827422
+      },
+      "ratio_vs_week2_reported": 51.66313887423383
+    },
+    "n_total_full": 30066,
+    "n_total_stride10": 3008,
+    "matches_week2_n_residual": true
+  },
+  "part2_autocorrelation": {
+    "file_id": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2",
+    "n": 4016,
+    "residual_rms_C": 1.0449760174740779,
+    "residual_mean_C": 0.943210238763534,
+    "residual_std_C": 0.44986633119537306,
+    "acf_at_lag_s": {
+      "1": 0.9961334774710565,
+      "5": 0.9827197561818605,
+      "10": 0.966507735199757,
+      "30": 0.9019299794730778,
+      "60": 0.8181780654842367,
+      "120": 0.6843434184719277,
+      "300": 0.47217435353457393,
+      "600": 0.31253323926922055
+    },
+    "tau_int_sokal_samples": 292.4928435472976,
+    "tau_int_firstneg_samples": 343.95754918378896,
+    "sokal_window_K": 1464,
+    "first_negative_lag_s": 903,
+    "tau_int_used_samples": 292.4928435472976,
+    "tau_int_used_s": 292.4928435472976,
+    "n_eff": 6.865125230577808,
+    "inflation_factor_sqrt_n_over_neff": 24.186477360181975,
+    "note": "1 Hz grid, so lag in samples == lag in seconds. tau_int is measured on this cycle at the locked central parameters; the residual is model error, not an independent noise draw."
+  },
+  "part3_corrected": {
+    "rows": {
+      "full_1Hz": {
+        "uncorrected_ci95_pct": 8.99353261065979,
+        "inflation_factor": 24.186477360181975,
+        "tau_int_on_this_grid": 292.4928435472976,
+        "n_samples": 30066,
+        "n_eff": 51.396129278524,
+        "corrected_ci95_pct": 217.5218728757813
+      },
+      "stride10": {
+        "uncorrected_ci95_pct": 28.39836145827422,
+        "inflation_factor": 7.6484357034271735,
+        "tau_int_on_this_grid": 29.24928435472976,
+        "n_samples": 3008,
+        "n_eff": 51.42006148799314,
+        "corrected_ci95_pct": 217.20304169629472
+      }
+    },
+    "step5_band": {
+      "low_K_per_W": 1.697196924251166,
+      "central_K_per_W": 3.394393848502332,
+      "high_K_per_W": 8.485984621255831,
+      "half_width_pct_of_central": 100.00000000000001,
+      "low_pct_of_central": -50.0,
+      "high_pct_of_central": 150.00000000000003,
+      "full_span_pct_of_central": 200.00000000000003,
+      "ratio_high_over_low": 5.000000000000001
+    }
+  }
+}
