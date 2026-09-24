@@ -299,3 +299,46 @@ Decision lives in [decisions/calibration-constrained-fit](decisions/calibration-
 > case argues for ridge.
 
 **Where in the writeup**: results (model comparison) + limitations.
+
+---
+
+## [2026-09-23] Part 2 Phase A: corrections to Part 1's thermal-parameter uncertainty claims
+
+**Headline for the report.**
+> A Fisher-information / Cramér–Rao audit of the locked thermal model finds that `R_cs` is weakly identified in a specific trade-off with the surface heat capacity `C_surf`, not on its own, and that the core/surface heat-capacity `split` is not identified at all. The Jacobian-derived parameter confidence intervals reported in Part 1 were wrong by roughly a factor of 50: both fitting residuals integrate the ODE at `rtol = 1e-3`, and their finite-difference Jacobian measured integrator noise rather than the derivative. The corrected 95 % bound on `R_cs` is ±29.5 %, not ±0.55 %, and is itself a lower bound. The headline ~5 °C `R_cs` band, the core-temperature labels, and every downstream ML result survive unchanged.
+
+**The six corrections** (§7.6, in order). Status legend, following §7.8's own definition: `JSON-backed` = value present in the locked `calibration_results.json` or a JSON in `part2/results/`; `console-only` = reported from scratch-diagnostic console output that was not persisted.
+
+1. **Parameter confidence intervals.** Part 1: `step3_diagnostic_fit.R_cs_ci95_pct` (0.55 %), `split_ci95` (0.67 %) and `step4_central_fit.split_ci95`. → Corrected: these are artifacts of a noise-dominated finite difference and should not be quoted; the defensible figure for `R_cs` is ±29.5 % (95 %). They were understated ~52× for `R_cs` and ~17× for `split` (§7.4); §7.4 also gives a factor of 54 for `R_cs`, which §7.1 rounds to "roughly 50". Bases: 52× / 17× = the two-parameter (`split`, `R_cs`) CRB at Part 1's diagnostic-fit point (`split` 0.9034, `R_cs` 1.6147), on the three calibration cycles at stride 10 (n = 3008), with Part 1's residual RMS σ = 0.5544 K and no autocorrelation correction, ÷ Part 1's reported CI; 54× = ±29.5 % ÷ 0.55 %, where ±29.5 % is the same two-parameter, stride-10, uncorrected basis with σ set instead to the tight-tolerance residual RMS of 0.5763 K (§7.4). Source: §7.6 item 1, §7.4. Status: **JSON-backed** for the Part 1 values and both ratios (`phase_a_noise_diagnostic.json` → `part1_week2_crb.stride10.crb_rel_ci95_pct` ÷ `part1_week2_crb.operating_point.reported_ci95_pct_*`: 28.40 / 0.5497 = 51.7 for `R_cs`, 11.33 / 0.6673 = 17.0 for `split`); **console-only** for the ±29.5 % figure itself, which is in no JSON and is *not* among the items §7.8 discloses as console-only. The nearest JSON-backed value is 28.40 % at σ = 0.5544 K.
+2. **How the local CI relates to the band.** Part 1: the tight local CI was "misleading, and must always be paired with the band sweep." → Replaced: once the Jacobian is computed correctly, the local CI (±29.5 %) and the band sweep (a factor of five in `R_cs`) point the same direction; the two measures agree. Source: §7.6 item 2. Status: the factor of five is **JSON-backed** (`phase_a_split_refit_diagnostic.json` → `locked_band_per_point.{low,high}.R_cs_K_per_W`, 1.697 → 8.486 K/W); ±29.5 % is **console-only**, as in item 1.
+3. **`split` is a prior, not a fit.** Part 1: the band is built by "sweep `R_cs`, refit `split` at each point." → Corrected: the refit is uninformative, and at the high band point it did not occur at all — the locked `split` there is `0.9300000000000000`, identical to the initial guess `p0 = 0.93`. At tight tolerance all three refits run to the upper bound 0.99 (`C_surf` = 0.432 J/K). Source: §7.6 item 3, §7.5. Status: **JSON-backed** (`phase_a_split_refit_diagnostic.json` → `fits[*].split`, `locked_band_per_point.high.split`, `optimizer.p0`); the supporting objective profile (tight cost monotone across the feasible range) is **console-only (§7.8)**.
+4. **Band spread at tight tolerance.** Part 1: 5.0686 °C. → 5.0658 °C at tight tolerance (0.055 %), below the precision at which it is quoted; not material. Source: §7.6 item 4. Status: **JSON-backed** (`phase_a_split_refit_diagnostic.json` → `band.locked_json.spread_max`, `band.locked_splits_tight.spread_max`).
+5. **Solver-tolerance portability.** Part 1 practice: traces and labels integrated at `rtol = 1e-6`, `atol = 1e-8`. → `rtol = 1e-6` is deterministic within an environment but not portable across them; the stored labels carry roughly 3e-3 °C rms of their own integration error. Solver tolerances should be pinned explicitly in any future specification. Source: §7.6 item 5. Status: **console-only (§7.8)**.
+6. **Rounded constants in label generation.** Part 1 practice: `generate_labels.py` uses `T_inf = 23.15` and `R_sa = 5.21` against the locked full-precision values. → This contributes about 2e-3 °C. Source: §7.6 item 6. Status: **console-only (§7.8)** for the 2e-3 °C magnitude.
+
+**What survives** (§7.6, as stated there).
+
+- **The headline `R_cs` band.** Peak modelled core-temperature spread: 5.0686 °C (locked artifact: loose fits, 1e-6 traces), 5.0658 °C (tight traces, locked splits), 5.0177 °C (tight traces, tight bound splits). Moving `split` from 0.928 to the boundary at 0.99 changes the headline by 0.05 °C, about one percent — the band is robust to a co-parameter being completely unidentified. **JSON-backed** (`phase_a_split_refit_diagnostic.json` → `band.*.spread_max`).
+- **The labels and the ML stage.** The loose integrator is confined to the two fitting-residual functions; every stored trace, label and reported metric was integrated at `rtol = 1e-6`, `atol = 1e-8`. Labels were generated at the locked splits, which remain a defensible prior. Nothing downstream requires regeneration; the LOCO results, the ridge-versus-HGBR comparison and the no-surface ablation stand unchanged.
+- **Tolerance bound on stored traces and metrics.** ≤ 2e-2 °C on any trace and ≤ 3.4e-3 °C on any validation metric (Mixed1 surface RMSE 0.382905 → 0.383299 at tight tolerance). **Console-only (§7.8)**, except 0.382905, which is the locked Step 6 value (`calibration_results.json` → `step6_validation_per_cycle`).
+
+**What this supersedes** (pointers only — none of these entries is edited).
+
+- **[2026-06-17] R_cs unidentifiability — empirically confirmed (band spread 5.1 °C T_core vs 0.07 °C surface RMSE)** — its statement that the local Jacobian CI (±0.4 %) "is therefore misleading and must always be paired with the band-sweep result" is replaced by corrections 1–2. The ±0.4 % it quotes comes from the run that entry cites (2026-06-17); §7 analysed the locked 2026-06-18b values. Its band-sweep headline survives.
+- **[2026-06-12] `R_int` is the least identifiable parameter — core-temp labels inherit an irreducible bias** — qualified: §7.3 finds `R_cs` weak in a trade-off with `C_surf`, which has the slightly larger CRB (25.47 % vs 23.49 %, 1σ), and §7.5 finds `split` not identified at all. Its Option B proposed reporting a Jacobian-derived CI on `R_int`; per correction 1, the pipeline's Jacobian-derived CIs should not be quoted.
+- **[2026-06-18b] Held-out evaluation, severity-stratified — where the model adds value vs thermal severity** — qualified on one point, "the diagnostic fit converged (cost dropped 10 % from initial)": §7.4 finds the locked Step 3 fit does not reproduce (a re-run lands at `split = 0.9367`, `R_cs = 1.4722` against the locked 0.9034, 1.6147; console-only). Its severity-stratified validation results stand, within the §7.6 bound.
+- Outside report-notes, also carrying the Part 1 CIs (not edited): [decisions/calibration-constrained-fit](decisions/calibration-constrained-fit.md), Step 3 result rows.
+
+**Open reproducibility gap.** The claims marked console-only above will become JSON-backed via planned subcommands in `part2/identifiability.py`; until then they rest on console output.
+
+**Where in the writeup**: [report/part2_phase_a.md](../report/part2_phase_a.md) §7, linked from the closing "Part 2" section of `report/writeup.md`. `writeup.md` Section 5 was left as published; no edits to it are proposed here.
+
+**Cross-refs**:
+- [report/part2_phase_a.md](../report/part2_phase_a.md) — §7, the written record (§7.6 corrections, §7.8 provenance).
+- [part2/identifiability.py](../part2/identifiability.py) — FIM/CRB module; `--noise-diagnostic` for §7.7.
+- [part2/results/phase_a_identifiability.json](../part2/results/phase_a_identifiability.json) — §7.3 CRB and eigenstructure.
+- [part2/results/phase_a_noise_diagnostic.json](../part2/results/phase_a_noise_diagnostic.json) — §7.4 ratios, §7.7 autocorrelation.
+- [part2/results/phase_a_split_refit_diagnostic.json](../part2/results/phase_a_split_refit_diagnostic.json) — §7.5 refits, §7.6 band spreads.
+- [concepts/least-squares-jacobian-confidence](concepts/least-squares-jacobian-confidence.md) — the local-CI gotcha that correction 2 revisits.
+- [concepts/identifiability](concepts/identifiability.md)
+- [decisions/calibration-constrained-fit](decisions/calibration-constrained-fit.md) — Part 1 calibration steps and the CIs corrected here.

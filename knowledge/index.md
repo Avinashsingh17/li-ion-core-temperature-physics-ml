@@ -6,6 +6,7 @@ See also:
 - [report-notes.md](report-notes.md) — headline caveats and findings reserved for the final writeup.
 - [concept-map.md](concept-map.md) — learner-facing glossary of physics, ML, and data concepts in active use, cross-linked to where each appears in code & decisions.
 - [presentation-notes.md](presentation-notes.md) — plain-language, audience-facing weekly recaps for explaining the project. User-authored, filed verbatim.
+- [report/part2_phase_a.md](../report/part2_phase_a.md) — Part 2, Phase A identifiability audit (§7): corrects Part 1's thermal-parameter confidence intervals; `split` not identified; the `R_cs` band survives.
 
 ## Sources
 

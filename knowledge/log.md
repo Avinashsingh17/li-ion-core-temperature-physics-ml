@@ -237,3 +237,12 @@ Removed the global `*.pptx` line from .gitignore (committed 5d9f44a). Verified r
 
 ## [2026-07-04] query | portfolio deck tracked + CC BY 4.0 dataset attribution
 report/presentation/btms_core_temp_overview.pptx (13 slides; figures F1–F7 embedded; model-derived-label caveat stated plainly on the data slide and the limitations slide; every quantitative claim traced to writeup.md) is now tracked (committed b17f197). Upgraded the slide-5 dataset line in place from the "License: see Mendeley / repo — not restated here" placeholder to "Licensed CC BY 4.0 (DOI 10.17632/cp3473x7xv.3)", editing only that paragraph's run and preserving level/font. No renderer (LibreOffice/pdftoppm) available locally, so the edit was verified textually via python-pptx reload.
+
+## [2026-09-23] query | Part 2 Phase A — identifiability audit of the locked thermal model (retroactive entry)
+Recording Part 2, Phase A, which was not logged when it was run. Read-only on locked run 2026-06-18b: local sensitivity / Fisher-information / Cramér–Rao analysis in `part2/identifiability.py`; results in `part2/results/phase_a_identifiability.json`, `phase_a_noise_diagnostic.json` and `phase_a_split_refit_diagnostic.json`; figure `part2/figures/sensitivity_traces.png`; written record `report/part2_phase_a.md` §7, linked from the closing "Part 2" section of `report/writeup.md`. Findings (§7.1): `R_cs` is weakly identified in a trade-off with `C_surf`, not on its own; the Part 1 Jacobian CIs were wrong by roughly a factor of 50 because both fitting residuals integrate at `rtol = 1e-3`; `split` is not identified. The ~5 °C `R_cs` band, the labels and the ML results survive (§7.6). Diagnostic re-fits wrote only to `part2/`; no re-lock, no label regeneration.
+
+## [2026-09-23] report-note | Part 2 Phase A corrections to Part 1's thermal-parameter uncertainty claims filed
+One consolidated entry appended to report-notes.md: headline, the six §7.6 corrections each tagged JSON-backed or console-only, what survives, pointers to the entries it supersedes or qualifies ([2026-06-17] R_cs unidentifiability, [2026-06-12] R_int least identifiable, [2026-06-18b] severity-stratified — none edited), the open reproducibility gap, and cross-refs. The entry flags that the corrected ±29.5 % `R_cs` figure is in no JSON and is not among §7.8's console-only disclosures.
+
+## [2026-09-23] query | index.md — See-also pointer to report/part2_phase_a.md
+Added one "See also" line to `knowledge/index.md` pointing to `report/part2_phase_a.md`. Nothing else in the index changed.
