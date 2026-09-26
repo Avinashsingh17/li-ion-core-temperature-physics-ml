@@ -136,9 +136,11 @@ The offset **grows in magnitude with temperature**. Using a single cross-ambient
 
 | stage | result |
 |---|---|
-| Step 3 diagnostic fit | `split = 0.903 ± 0.006`, `R_cs = 1.62 ± 0.009 K/W` (±0.5 % local CI). Cost dropped 10 % from initial — the optimizer moved this time, in contrast to the 2026-06-18a run where the biased T_inf had it stuck. |
+| Step 3 diagnostic fit | `split = 0.903 ± 0.006`, `R_cs = 1.62 ± 0.009 K/W` (±0.5 % local CI)†. Cost dropped 10 % from initial — the optimizer moved this time, in contrast to the 2026-06-18a run where the biased T_inf had it stuck. |
 | Step 4 central params | `C_core = 40.10 J/K, C_surf = 3.10 J/K, R_cs = 3.39 K/W, R_sa = 5.21 K/W`. Cal RMSE = 0.540 °C — close to the 2026-06-17 run's 0.474 °C, confirming the original numbers were essentially right; the 2026-06-18a regression was the fallback bias. |
 | Step 5 band sweep | splits stable 0.93 → 0.95 across R_cs ∈ [1.70, 8.49] K/W; cal RMSE varies 0.52 → 0.57 °C; **T_core peak spreads 5.07 °C** — R_cs unidentifiability still holds. |
+
+† Integrator-noise artifact of the loosely integrated fitting residual; see report/part2_phase_a.md §7.4 and report-notes [2026-09-23].
 
 ### SEVERITY-STRATIFIED held-out validation (5 cycles)
 
@@ -205,9 +207,11 @@ The 2026-06-17 run was redone with two evaluation-integrity checks:
 
 | stage | result |
 |---|---|
-| Step 3 diagnostic fit | `split = 0.930 ± 0.012`, `R_cs = 1.50 ± 0.021 K/W` (±1.4 % local CI). **Cost did NOT drop from initial** — optimizer terminated by xtol without moving. With the 25 °C T_inf biased high, the residual is dominated by a level offset that split/R_cs cannot fix. |
+| Step 3 diagnostic fit | `split = 0.930 ± 0.012`, `R_cs = 1.50 ± 0.021 K/W` (±1.4 % local CI)†. **Cost did NOT drop from initial** — optimizer terminated by xtol without moving. With the 25 °C T_inf biased high, the residual is dominated by a level offset that split/R_cs cannot fix. |
 | Step 4 central params | `C_core = 41.29 J/K, C_surf = 1.91 J/K, R_cs = 3.39 K/W, R_sa = 5.21 K/W` (refit converged from same starting point with R_cs frozen). Cal RMSE = 0.889 °C. |
 | Step 5 band sweep | split stable 0.92 → 0.96 across R_cs ∈ [1.70, 8.49] K/W. Cal RMSE varies 0.82 → 0.92 °C across the 5× R_cs spread. **T_core peak spreads 5.09 °C** — R_cs unidentifiability still holds. |
+
+† This CI comes from the superseded 2026-06-18a run of the same diagnostic fit, computed with the same Jacobian-CI method. §7.4 demonstrated the artifact on the locked 2026-06-18b value, not on this one; see report-notes [2026-09-23].
 
 ### Cleaned held-out validation — TWO baselines
 
@@ -258,6 +262,8 @@ The honest finding is that on these LG drive cycles at moderate ambients, the tw
    `R_sa` is re-anchored from the **free-asymptote τ values**: median **R_sa = 5.22 K/W** (range [4.54, 8.69]). The setpoint-forced fits in the previous run gave R_sa = 2.35 K/W — biased >2× low because forcing the asymptote up made the exponential look faster.
 
 3. **Diagnostic fit `(split, R_cs)`** with `C_total`, `R_sa` fixed; calibration cycles US06 / LA92 / UDDS at 25 °C. `split = 0.882 ± 0.003`, **`R_cs = 1.59 ± 0.007 K/W (±0.4 %)` local CI**. Cost dropped 5 % from initial — meaningful optimization (previously 0.6 % with the bad ambient reference). The local CI is still much tighter than the global flatness — see Step 5.
+
+   This CI comes from the 2026-06-17 run of the same diagnostic fit, computed with the same Jacobian-CI method. §7.4 demonstrated the artifact on the locked 2026-06-18b value, not on this one; see report-notes [2026-09-23].
 
 4. **Anchor `R_cs` from geometry**: same recipe as before. With the larger R_sa, Lin 2014's `R_c/R_u ≈ 0.6` cross-check now gives `R_cs ≈ 3.13 K/W`, which lies **inside** the geometric range `[1.70, 8.49]` K/W — no band widening required. **R_cs ∈ [1.70, 8.49] K/W**, geometric central 3.39 K/W.
 

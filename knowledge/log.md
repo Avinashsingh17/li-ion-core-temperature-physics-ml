@@ -246,3 +246,15 @@ One consolidated entry appended to report-notes.md: headline, the six §7.6 corr
 
 ## [2026-09-23] query | index.md — See-also pointer to report/part2_phase_a.md
 Added one "See also" line to `knowledge/index.md` pointing to `report/part2_phase_a.md`. Nothing else in the index changed.
+
+## [2026-09-25] query | part2: reproducibility subcommands added (d034c96)
+Added to `part2/identifiability.py`: `--derived`, `--jacobian-diagnostic --stage {jacobian,factorial,refit,refit-jacobian}`, `--split-profile`, `--tolerance-bounds --stage {labels,metrics}`. They call Part 1's own functions (the fitting residuals, `_jacobian_ci`, `evaluate_on_cycle`, `label_one_cycle`), change solver settings only by wrapping `simulate_T` in worker processes and log the tolerances each call actually used, gate on bitwise determinism across processes and on step invariance of tight Jacobians, record provenance (git commit, clean tree, package versions, locked-calibration md5), and write only new JSONs in `part2/results/`; the three Phase A JSONs are deny-listed.
+
+## [2026-09-25] query | part2: gate data recorded on failure; report-only invariance diagnostics (aa119ef)
+A failed step-invariance gate now writes its stage block with `status: "gate_failed"` before exiting: exit code 3 for the informational `refit-jacobian` stage, whose failure does not stop the run sequence, exit code 2 otherwise. Every tight finite-difference Jacobian also reports, as non-gating diagnostics, the deviation between the two smallest steps and a Richardson estimate from the 0.02 and 0.005 steps.
+
+## [2026-09-25] query | §7 reproducibility results committed (f07d417)
+All eight stages run on aa119ef with a clean tree and the locked-calibration md5 verified; four JSONs committed (`phase_a_derived.json`, `phase_a_jacobian_diagnostic.json`, `phase_a_split_profile.json`, `phase_a_tolerance_bounds.json`). `refit-jacobian` ended `gate_failed`: the tight Jacobian at the `x_scale=1.0` refit point is not step-invariant at the 2 % step (`split` column); the report-only diagnostics point to truncation error, not noise, and no §7 figure depends on it.
+
+## [2026-09-25] writeup | §7 revised from the regenerated JSON; KB updated
+`report/part2_phase_a.md`: revision note under the status block; three figures corrected (§7.7 offset share 81 %, not 82 %; §7.6 stored-trace integration-error bound 2.2e-2 °C, not 2e-2 °C; §7.6 item 5 stored labels' own integration error up to 3.7e-3 °C rms, not roughly 3e-3 °C); statements clarified in §7.4, §7.6 items 2 and 5, and §7.7; §7.8 rewritten (every reproduction command, how the runs work, provenance with its three remaining exceptions, environment). Knowledge base: report-notes entry "[2026-09-25] Part 2 item 2: §7 made reproducible; revision filed"; in `decisions/calibration-constrained-fit.md`, "†" notes under the 2026-06-18b and 2026-06-18a Step-3 table rows and a note under the 2026-06-17 Step-3 item; a "Project note" appended to `concepts/least-squares-jacobian-confidence.md`. `writeup.md` unchanged.

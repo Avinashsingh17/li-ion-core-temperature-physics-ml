@@ -342,3 +342,34 @@ Decision lives in [decisions/calibration-constrained-fit](decisions/calibration-
 - [concepts/least-squares-jacobian-confidence](concepts/least-squares-jacobian-confidence.md) — the local-CI gotcha that correction 2 revisits.
 - [concepts/identifiability](concepts/identifiability.md)
 - [decisions/calibration-constrained-fit](decisions/calibration-constrained-fit.md) — Part 1 calibration steps and the CIs corrected here.
+
+---
+
+## [2026-09-25] Part 2 item 2: §7 made reproducible; revision filed
+
+**Headline for the report.**
+> Every data-derived figure in `report/part2_phase_a.md` §7 is now regenerated from code into JSON by `part2/identifiability.py`, which calls Part 1's own functions and compares each regenerated value with the figure as first published (commit f77b4c4). Regeneration corrected three figures and clarified several statements in §7.4, §7.6 and §7.7. No conclusion changed.
+
+**The three corrected figures** (§7, revision note under the status block).
+
+1. **§7.7, offset share of the residual.** Roughly 81 % of the mean-square residual is a constant offset and 19 % is scatter, not 82 % / 18 %. Source: `phase_a_noise_diagnostic.json` → `part2_autocorrelation.residual_mean_C` and `residual_rms_C` (mean² / rms² = 81.47 %); regenerated in `phase_a_derived.json` (`acceptance`, §7.7 rows).
+2. **§7.6, integration-error bound on stored traces.** ≤ 2.2e-2 °C, not 2e-2 °C, over all four stored channels of all 11 labelled cycles; the maximum, 0.021958 °C, is US06's upper band trace (`T_core_model_hi_C`). Source: `phase_a_tolerance_bounds.json` → `stages.labels.maxima.tight_vs_stored.max_abs_K`.
+3. **§7.6 item 5, the stored labels' own integration error.** Up to 3.7e-3 °C rms on the central traces (LA92), not roughly 3e-3 °C; the band traces up to 7.8e-3 °C rms (US06 upper band). Source: `phase_a_tolerance_bounds.json` → `stages.labels.per_cycle["LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2.parquet"].T_core_model_C.tight_vs_stored.rms_K` (3.683e-3) and `stages.labels.maxima.tight_vs_stored.rms_K` (7.829e-3).
+
+**What this closes** (pointers only; the earlier entry is not edited). In **[2026-09-23] Part 2 Phase A: corrections to Part 1's thermal-parameter uncertainty claims**:
+
+- its **Open reproducibility gap**: the claims it marked console-only now trace to JSON in `part2/results/` (`phase_a_jacobian_diagnostic.json`, `phase_a_split_profile.json`, `phase_a_tolerance_bounds.json`, `phase_a_derived.json`);
+- its flag that ±29.5 % is in no JSON: the figure is now `phase_a_jacobian_diagnostic.json` → `stages.jacobian.ci_route.tight["0.02"].R_cs_pct` (29.529 %, computed by `calibrate._jacobian_ci`), and the tight-tolerance residual RMS behind it, 0.5763 K, is `stages.jacobian.residuals.tight_rms_K`.
+
+**What remains outside the JSONs** (§7.8): the external physical figures in §7.5 (steel specific heat and can mass); code constants quoted from `calibrate.py` and `generate_labels.py`; the environment described in §7.8.
+
+**Recorded failed check** (§7.8): the tight-tolerance Jacobian at the `x_scale=1.0` refit point is not step-invariant at the 2 % step (`split` column, 3.7e-3 against a 1e-3 gate); the report-only diagnostics point to truncation error, not noise. No §7 figure depends on it.
+
+**Where in the writeup**: [report/part2_phase_a.md](../report/part2_phase_a.md) §7, revision note under the status block and §7.8 rewritten. `writeup.md` is unchanged.
+
+**Cross-refs**:
+- [report/part2_phase_a.md](../report/part2_phase_a.md) — §7 as revised.
+- [part2/identifiability.py](../part2/identifiability.py) — the reproducibility subcommands (§7.8).
+- [part2/results/phase_a_derived.json](../part2/results/phase_a_derived.json), [phase_a_jacobian_diagnostic.json](../part2/results/phase_a_jacobian_diagnostic.json), [phase_a_split_profile.json](../part2/results/phase_a_split_profile.json), [phase_a_tolerance_bounds.json](../part2/results/phase_a_tolerance_bounds.json).
+- [decisions/calibration-constrained-fit](decisions/calibration-constrained-fit.md) — Step 3 CIs annotated.
+- [concepts/least-squares-jacobian-confidence](concepts/least-squares-jacobian-confidence.md) — project note on step invariance.

@@ -10,6 +10,14 @@
 > of internal cell temperature exists in this dataset or in any public dataset
 > we are aware of for these cells.
 
+> **Revised 2026-09-25.** Every data-derived figure in this section is now
+> regenerated from code into JSON (§7.8). Doing so corrected three figures: the
+> offset share of the residual in §7.7 (81 %, not 82 %), the integration-error
+> bound on stored traces in §7.6 (2.2e-2 °C, not 2e-2 °C), and the stored
+> labels' own integration error in §7.6 item 5 (up to 3.7e-3 °C rms, not
+> roughly 3e-3 °C). It also clarified several statements in §7.4, §7.6 and
+> §7.7. No conclusion changed.
+
 ## 7.1 What this section asks, and the short answer
 
 Part 1 ended on a limitation: the core↔surface conduction resistance `R_cs`
@@ -127,6 +135,12 @@ The cause is the solver tolerance inside the residual function. Both fitting
 residuals (`_residuals_split_Rcs`, `_residuals_split_only`) integrate the ODE
 at `rtol = 1e-3`, `atol = 1e-5`, `max_step = 20 s`. The finite-difference
 Jacobian of that function measures integrator noise rather than the derivative.
+A 2×2 factorial at the locked Step-3 point isolates the cause. Tightening
+rtol/atol alone brings the noise-to-signal ratio below 2e-3 in both columns.
+Tightening max_step alone leaves the `split` column noise-dominated
+(noise-to-signal 2.4 at the 2 % step, 2.6 at the 0.5 % step). A long max_step
+amplifies the problem, since reducing it alone cuts the `R_cs` noise about
+660-fold at the 2 % step, but it does not cause it.
 
 The step-invariance test identifies this unambiguously, using the column norm
 of the Jacobian with respect to `R_cs`:
@@ -158,21 +172,26 @@ Two independent confirmations that ±29.5 % is the right number:
   11.78 % for `split`.
 - The CRB computed through entirely separate code gives 28.40 % at σ = 0.5544;
   rescaling to the tight-tolerance residual RMS of 0.5763 gives 29.52 %. The
-  two routes agree to about 0.01 %.
+  two routes agree to within 0.01 percentage points (0.008); most of that gap
+  is the n versus n − 2 normalisation of the variance estimate.
 
 A related symptom, noted for completeness: **the locked Step 3 fit does not
 reproduce.** Re-running it with identical code and settings lands at
 `split = 0.9367`, `R_cs = 1.4722`, against the locked `0.9034`, `1.6147`. Both
 terminate on `xtol` with the same message recorded in the locked artifact, at
-essentially equal cost. The two answers are 8.8 % apart, comfortably inside a
-genuine ±29.5 % interval — they are not inconsistent, merely imprecise in a way
-the reported ±0.55 % concealed entirely.
+essentially equal cost. The two `R_cs` values are 8.8 % apart (the `split`
+values 3.7 %), comfortably inside a genuine ±29.5 % interval — they are not
+inconsistent, merely imprecise in a way the reported ±0.55 % concealed
+entirely.
 
 A hypothesis that the `x_scale="jac"` option was corrupting the returned
 Jacobian was tested and refuted, both by reading the SciPy source (`trf_bounds`
 returns the raw Jacobian; the scaling is applied only to a separate operator
-used for the trust-region subproblem) and empirically (a refit with
-`x_scale=1.0` remains inflated 15.8× and 45.0×).
+used for the trust-region subproblem) and empirically: a refit with
+`x_scale=1.0` still returns Jacobian columns 15.8× (`split`) and 45.0× (`R_cs`)
+the size of the tight-tolerance ones. The refit's Jacobian is evaluated at its
+own solution rather than at the locked Step-3 point, so this comparison spans
+the shift described above.
 
 ## 7.5 Finding 3 — the heat-capacity split is not identified
 
@@ -252,12 +271,13 @@ core-temperature uncertainty.
 **Survives — the labels and the ML stage.** The loose integrator is confined to
 the two fitting-residual functions. Every stored trace, every label, and every
 reported metric was integrated at `rtol = 1e-6`, `atol = 1e-8`. Integration
-error in anything stored or reported is bounded at ≤ 2e-2 °C on any trace and
-≤ 3.4e-3 °C on any validation metric (Mixed1 surface RMSE moves from 0.382905
-to 0.383299 at tight tolerance). Labels were generated at the locked splits,
-which remain a defensible prior. Nothing downstream requires regeneration, and
-the LOCO results, the ridge-versus-HGBR comparison, and the no-surface ablation
-all stand unchanged.
+error in anything stored or reported is bounded at ≤ 2.2e-2 °C on any stored
+trace (all four stored channels of all 11 labelled cycles; the maximum is
+US06's upper band trace) and ≤ 3.4e-3 °C on any validation metric (Mixed1
+surface RMSE moves from 0.382905 to 0.383299 at tight tolerance). Labels were
+generated at the locked splits, which remain a defensible prior. Nothing
+downstream requires regeneration, and the LOCO results, the ridge-versus-HGBR
+comparison, and the no-surface ablation all stand unchanged.
 
 **Corrections to Part 1:**
 
@@ -269,16 +289,25 @@ all stand unchanged.
 2. Part 1 framed the tight local CI as "misleading, and must always be paired
    with the band sweep." That framing is replaced: once the Jacobian is
    computed correctly, the local CI (±29.5 %) and the band sweep (a factor of
-   five in `R_cs`) point the same direction. The two measures agree.
+   five in `R_cs`) point the same direction: both say `R_cs` is poorly
+   determined by surface data. They measure different things, a local lower
+   bound under an optimistic noise model and a sweep across a physically
+   plausible range, so they are not expected to agree in magnitude. They are no
+   longer in conflict.
 3. `split` is a prior, not a fit. Methods text describing the band as "sweep
    `R_cs`, refit `split` at each point" must note that the refit is
    uninformative, and that at the high band point it did not occur at all.
 4. Band spread 5.0686 → 5.0658 at tight tolerance (0.055 %), below the
    precision at which it is quoted. Not material; recorded for completeness.
-5. `rtol = 1e-6` is deterministic within an environment but not portable across
-   them; the stored labels carry roughly 3e-3 °C rms of their own integration
-   error. Solver tolerances should be pinned explicitly in any future
-   specification.
+5. Both solver settings are deterministic within an environment (bitwise across
+   processes, §7.8) but neither is portable across environments. With every
+   input identical, re-running at `rtol = 1e-6` gives a Mixed1 surface RMSE of
+   0.382919 against the locked 0.382905, and Part 1's `rtol = 1e-3` fitting
+   residual at the locked Step-3 point gives an RMS of 0.5841 K against the
+   recorded 0.5544 K. The environment of the June run was not recorded. The
+   stored central labels carry up to 3.7e-3 °C rms of their own integration
+   error (LA92), and the band traces up to 7.8e-3 °C rms (US06 upper band).
+   Solver tolerances should be pinned explicitly in any future specification.
 6. `generate_labels.py` uses rounded constants (`T_inf = 23.15`,
    `R_sa = 5.21`) against the locked full-precision values, contributing about
    2e-3 °C.
@@ -287,15 +316,17 @@ all stand unchanged.
 
 **The CRB is optimistic, because its own assumption is violated.** It assumes
 independent Gaussian measurement noise. The residual is not that. Measured on
-US06 at the locked parameters, the residual autocorrelation is
-ρ(60 s) = 0.82, ρ(300 s) = 0.47, ρ(600 s) = 0.31, with an integrated
-autocorrelation time of 292 s. That is within striking distance of the system's
-own thermal time constant `R_sa · C_total = 225 s` — the residual is the cell's
-slow thermal mode, mismatched, not a noise process. Its mean is +0.94 °C
-against a standard deviation of 0.45 °C, so roughly 82 % of the residual
-variance is a constant offset and 18 % is scatter.
-Treating it as correlated noise would give an effective sample size of about 7
-out of 4016, but treating structural model error as a stochastic process is not
+US06 at the locked parameters, the residual autocorrelation is ρ(60 s) = 0.82,
+ρ(300 s) = 0.47, ρ(600 s) = 0.31, with an integrated autocorrelation time of
+292 s. That is within striking distance of the system's own thermal time
+constant `R_sa · C_total = 225 s` — the residual is the cell's slow thermal
+mode, mismatched, not a noise process. Its mean is +0.94 °C against a standard
+deviation of 0.45 °C, so roughly 81 % of the mean-square residual is a constant
+offset and 19 % is scatter. Treating it as correlated noise would give an
+effective sample size of about 7 out of 4016 on US06 (about 51 across the three
+calibration cycles, reusing US06's τ_int), and would widen the `R_cs` 95 %
+bound to about ±217 %, wider than the parameter itself. That figure is not
+adopted either: treating structural model error as a stochastic process is not
 defensible in the first place. The honest statement is that **±29.5 % is a
 lower bound on the uncertainty in `R_cs`, and the true figure is larger** —
 consistent in direction with the band sweep's factor of five.
@@ -319,25 +350,42 @@ a hypothesis, not a result.
 ## 7.8 Reproduction
 
 ```
-python part2/identifiability.py                      # §7.3
-python part2/identifiability.py --noise-diagnostic   # §7.7 autocorrelation
+python part2/identifiability.py                                                # §7.3
+python part2/identifiability.py --noise-diagnostic                             # §7.7 autocorrelation
+python part2/identifiability.py --derived                                      # arithmetic on existing JSON
+python part2/identifiability.py --jacobian-diagnostic --stage jacobian         # §7.4
+python part2/identifiability.py --jacobian-diagnostic --stage factorial        # §7.4 cause
+python part2/identifiability.py --jacobian-diagnostic --stage refit            # §7.4 refits
+python part2/identifiability.py --jacobian-diagnostic --stage refit-jacobian   # informational
+python part2/identifiability.py --split-profile                                # §7.5
+python part2/identifiability.py --tolerance-bounds --stage labels              # §7.6
+python part2/identifiability.py --tolerance-bounds --stage metrics             # §7.6
 ```
 
-Outputs are written to `part2/results/` as JSON with full provenance. The
-split re-fit results in §7.5 are in
-`part2/results/phase_a_split_refit_diagnostic.json`. The objective profile
-in the same section was run as a scratch diagnostic and its output was not
-written to a file; the numbers in that table are reproduced from console
-output and are not independently traceable in this repository.
+Stages run in the order listed, and each writes JSON to `part2/results/`. The
+commands from `--derived` onward call Part 1's own functions: the fitting
+residuals, the CI routine, the Step 6 metric function, and the label generator.
+They change solver settings only by wrapping `simulate_T` in worker processes,
+and they log the tolerances each call actually used. Each run requires a clean,
+committed tree. Before any derivative is taken, it checks for bitwise
+determinism across processes. It records the git commit, the package versions,
+and the md5 of the locked calibration file.
 
-Environment: Python 3.12 (Anaconda), numpy 1.26.4, scipy 1.13.1. Solver
-tolerances are pinned in the module constants and must not be relaxed —
-§7.4 is what happens when they are.
+**Provenance.** Every number in this section traces to the locked
+`calibration_results.json` or to a JSON in `part2/results/`. The exceptions are
+the external physical figures in §7.5 (steel specific heat and can mass), code
+constants quoted from `calibrate.py` and `generate_labels.py`, and the
+environment below. Each reproducibility JSON carries an acceptance table that
+compares every regenerated value with the figure as first published in commit
+f77b4c4. Every mismatch it records is either a figure corrected in this
+revision or the portability result in §7.6 item 5. One stage records a failed
+check. The tight-tolerance Jacobian at the `x_scale=1.0` refit point is not
+step-invariant at the 2 % step (`split` column, 3.7e-3 against a 1e-3 gate);
+the report-only diagnostics point to truncation error, not noise. No figure in
+this section depends on it.
 
-**Provenance.** Every number in this section was traced to either the locked
-`calibration_results.json` or a JSON in `part2/results/`, except where marked
-otherwise. The figures in §7.4's step-invariance and noise-to-signal tables,
-the objective profile table in §7.5, and the tolerance bounds in §7.6 come from
-scratch diagnostics whose output was not persisted; they are reported from
-console output and a reader cannot re-derive them from this repository without
-re-running those diagnostics.
+Environment: Python 3.12.4 (Anaconda), numpy 1.26.4, scipy 1.13.1, pandas
+2.2.2, run with `PYTHONNOUSERSITE=1`. On the machine used, user site-packages
+hold numpy 2.4.1 and pandas 3.0.0, which the interpreter otherwise picks up.
+Solver tolerances are pinned in the module constants and must not be relaxed;
+§7.4 shows what happens when they are.
