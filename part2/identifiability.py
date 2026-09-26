@@ -1441,6 +1441,21 @@ def _rp_task(task: dict):
 # Parent side: pools, patch log, gates
 # ---------------------------------------------------------------------------
 
+class GateFailed(RuntimeError):
+    """A step-invariance gate failed. Carries the stage block so the evidence
+    is written (status "gate_failed") before the process exits non-zero.
+
+    informational=True marks a stage whose result is not a §7 figure; a
+    gate_failed result there does not stop the run sequence (exit code 3).
+    Every other gate failure aborts the sequence (exit code 2).
+    """
+
+    def __init__(self, message: str, block: dict, informational: bool = False):
+        super().__init__(message)
+        self.block = block
+        self.informational = informational
+
+
 class _PatchLog:
     """C2: what each evaluation group actually passed to the solver."""
 
@@ -1650,6 +1665,9 @@ def _require_stage(fname: str, stage: str, prov: dict) -> dict:
             blk = json.load(fh).get("stages", {}).get(stage)
     if blk is None:
         raise SpecMismatch(f"stage {stage!r} must run first (not found in {fname})")
+    if blk.get("status") != "ok":
+        raise SpecMismatch(f"stage {stage!r} ended with status {blk.get('status')!r}; "
+                           f"stages that depend on it cannot run")
     if blk["provenance"]["git_head"] != prov["git_head"]:
         raise SpecMismatch(f"stage {stage!r} ran on commit {blk['provenance']['git_head'][:10]}, "
                            f"current HEAD is {prov['git_head'][:10]}; re-run it")
@@ -1810,7 +1828,10 @@ def _fd_jac(res: dict, p, rels) -> dict:
     return out
 
 
-def _invariance(jac: dict, rels) -> dict:
+def _invariance(jac: dict, rels, report_only: bool = False) -> dict:
+    """Step-invariance gate data. The gate itself is unchanged: every step's
+    ||J|| column norm within STEP_INVARIANCE_RTOL of the largest step's.
+    report_only=True (tight Jacobians) adds diagnostics that are NOT gates."""
     ref = max(rels)
     norms = {rel: np.linalg.norm(jac[rel]["J"], axis=0) for rel in rels}
     dev = {rel: norms[rel] / norms[ref] - 1.0 for rel in rels}
@@ -1820,11 +1841,67 @@ def _invariance(jac: dict, rels) -> dict:
     slope = {name: float(np.log(norms[lo][j] / norms[hi][j]) / np.log(lo / hi))
              for j, name in enumerate(PARAMS2)}
     max_dev = float(max(abs(v) for rel in rels for v in dev[rel]))
-    return {"col_norms": {str(rel): dict(zip(PARAMS2, map(float, norms[rel]))) for rel in rels},
-            f"rel_dev_vs_{ref}": {str(rel): dict(zip(PARAMS2, map(float, dev[rel]))) for rel in rels},
-            "max_abs_rel_dev": max_dev, "loglog_slope_norm_vs_step": slope,
-            "step_invariant": bool(max_dev <= STEP_INVARIANCE_RTOL),
-            "tolerance": STEP_INVARIANCE_RTOL}
+    out = {"col_norms": {str(rel): dict(zip(PARAMS2, map(float, norms[rel]))) for rel in rels},
+           f"rel_dev_vs_{ref}": {str(rel): dict(zip(PARAMS2, map(float, dev[rel]))) for rel in rels},
+           "max_abs_rel_dev": max_dev, "loglog_slope_norm_vs_step": slope,
+           "step_invariant": bool(max_dev <= STEP_INVARIANCE_RTOL),
+           "tolerance": STEP_INVARIANCE_RTOL}
+    if report_only:
+        out["report_only"] = _invariance_report_only(jac, rels, norms)
+    return out
+
+
+def _invariance_report_only(jac: dict, rels, norms: dict) -> dict:
+    """REPORT-ONLY (not gates): separate central-difference truncation, which
+    shrinks as h^2, from noise, which grows as 1/h."""
+    rep = {"note": "report-only diagnostics; not gates"}
+    if 0.005 in rels and 0.001 in rels:
+        d = norms[0.005] / norms[0.001] - 1.0
+        rep["rel_dev_0.005_vs_0.001"] = dict(zip(PARAMS2, map(float, d)))
+    if 0.02 in rels and 0.005 in rels:
+        r = 0.02 / 0.005
+        j_r = jac[0.005]["J"] + (jac[0.005]["J"] - jac[0.02]["J"]) / (r ** 2 - 1.0)
+        n_r = np.linalg.norm(j_r, axis=0)
+        rep["richardson"] = {
+            "from_steps": [0.02, 0.005],
+            "formula": "J_R = J(0.005) + (J(0.005) - J(0.02)) / (4^2 - 1); central FD error ~ h^2",
+            "col_norms": dict(zip(PARAMS2, map(float, n_r))),
+            "norm_dev_of_step_from_richardson": {
+                str(rel): dict(zip(PARAMS2, map(float, norms[rel] / n_r - 1.0))) for rel in rels},
+            "vector_rel_dist_of_step_from_richardson": {
+                str(rel): {name: float(np.linalg.norm(jac[rel]["J"][:, j] - j_r[:, j])
+                                       / np.linalg.norm(j_r[:, j]))
+                           for j, name in enumerate(PARAMS2)} for rel in rels},
+        }
+    return rep
+
+
+def _print_invariance(inv: dict, title: str) -> None:
+    refk = next(k for k in inv if k.startswith("rel_dev_vs_"))
+    print(f"\n  {title}")
+    print(f"  {'step':>7s} {'||J_split||':>14s} {'||J_Rcs||':>12s} "
+          f"{'dev split':>11s} {'dev R_cs':>11s}   ({refk})")
+    for rel, n in inv["col_norms"].items():
+        d = inv[refk][rel]
+        print(f"  {rel:>7s} {n['split']:14.6f} {n['R_cs']:12.6f} {d['split']:+11.3e} {d['R_cs']:+11.3e}")
+    sl = inv["loglog_slope_norm_vs_step"]
+    print(f"  max_abs_rel_dev = {inv['max_abs_rel_dev']:.3e} (gate {inv['tolerance']:.0e}) -> "
+          f"{'PASS' if inv['step_invariant'] else 'FAIL'};  log-log slope: "
+          f"split {sl['split']:+.4f}, R_cs {sl['R_cs']:+.4f}")
+    ro = inv.get("report_only")
+    if not ro:
+        return
+    if "rel_dev_0.005_vs_0.001" in ro:
+        d = ro["rel_dev_0.005_vs_0.001"]
+        print(f"  [report-only] rel dev 0.005 vs 0.001: split {d['split']:+.3e}, R_cs {d['R_cs']:+.3e}")
+    if "richardson" in ro:
+        rr = ro["richardson"]
+        print(f"  [report-only] Richardson (0.02, 0.005): ||J_split|| {rr['col_norms']['split']:.6f}, "
+              f"||J_Rcs|| {rr['col_norms']['R_cs']:.6f}")
+        for rel, d in rr["norm_dev_of_step_from_richardson"].items():
+            v = rr["vector_rel_dist_of_step_from_richardson"][rel]
+            print(f"      step {rel:>6s}: norm dev split {d['split']:+.3e}, R_cs {d['R_cs']:+.3e};  "
+                  f"vector dist split {v['split']:.3e}, R_cs {v['R_cs']:.3e}")
 
 
 # ---------------------------------------------------------------------------
@@ -1857,11 +1934,17 @@ def _stage_jacobian(locked, ctx, workers, book) -> dict:
                             "tight: central-FD points + reimplementation cross-check")
 
     Jt, Jl = _fd_jac(tight, p, REPRO_RELS), _fd_jac(loose, p, REPRO_RELS)
-    inv_t, inv_l = _invariance(Jt, REPRO_RELS), _invariance(Jl, REPRO_RELS)
+    inv_t = _invariance(Jt, REPRO_RELS, report_only=True)
+    inv_l = _invariance(Jl, REPRO_RELS)
     gates.append({"name": "step invariance, tight Jacobian", "passed": inv_t["step_invariant"],
                   "max_abs_rel_dev": inv_t["max_abs_rel_dev"], "tolerance": STEP_INVARIANCE_RTOL})
+    _print_invariance(inv_t, "tight Jacobian at the locked Step-3 point")
     if not inv_t["step_invariant"]:
-        raise SpecMismatch(f"tight Jacobian not step-invariant: {inv_t['max_abs_rel_dev']:.3e}")
+        raise GateFailed(
+            f"tight Jacobian at the locked Step-3 point is not step-invariant "
+            f"(max_abs_rel_dev {inv_t['max_abs_rel_dev']:.3e})",
+            {"point": {"split": p[0], "R_cs": p[1]}, "gates": gates,
+             "tight_jacobian": inv_t, "loose_jacobian": inv_l, "acceptance": []})
 
     noise = {}
     for rel in REPRO_RELS:
@@ -1985,10 +2068,12 @@ def _stage_factorial(locked, ctx, workers, book, jac_block) -> dict:
             gates.append(g)
             res = _eval_specs(pa, ctx, _fd_specs(p, FACTORIAL_RELS), f"factorial {cname}: central-FD points")
         J = _fd_jac(res, p, FACTORIAL_RELS)
-        inv = _invariance(J, FACTORIAL_RELS)
-        entry = {"tolerances": tol, "col_norms": inv["col_norms"],
-                 "step_invariance": {k: inv[k] for k in ("max_abs_rel_dev", "loglog_slope_norm_vs_step",
-                                                          "step_invariant")},
+        # Recorded, not gated: the factorial's purpose is to measure noise.
+        inv = _invariance(J, FACTORIAL_RELS, report_only=tol["rtol"] < 1e-6)
+        si = {k: inv[k] for k in ("max_abs_rel_dev", "loglog_slope_norm_vs_step", "step_invariant")}
+        if "report_only" in inv:
+            si["report_only"] = inv["report_only"]
+        entry = {"tolerances": tol, "col_norms": inv["col_norms"], "step_invariance": si,
                  "noise": {}}
         for rel in FACTORIAL_RELS:
             for name in PARAMS2:
@@ -2122,25 +2207,34 @@ def _stage_refit_jacobian(locked, ctx, workers, book, refit_block) -> dict:
         gates.append(g)
         res = _eval_specs(ta, ctx, _fd_specs(q, REPRO_RELS), "tight: central-FD points at the refit point")
     J = _fd_jac(res, q, REPRO_RELS)
-    inv = _invariance(J, REPRO_RELS)
+    inv = _invariance(J, REPRO_RELS, report_only=True)
     gates.append({"name": "step invariance, tight Jacobian at the refit point",
                   "passed": inv["step_invariant"], "max_abs_rel_dev": inv["max_abs_rel_dev"],
                   "tolerance": STEP_INVARIANCE_RTOL})
+    _print_invariance(inv, "tight Jacobian at the x_scale=1.0 refit point")
+    rj = r1["jac_col_norms"]
+    rich = inv["report_only"]["richardson"]["col_norms"]
+    block = {
+        "point": {"split": q[0], "R_cs": q[1], "source": "stage 'refit', x_scale=1.0"},
+        "gates": gates, "tight_jacobian": inv,
+        # The like-for-like ratio is informational: it is not a §7 figure, so it
+        # carries no acceptance row. §7.4's printed-definition ratio is accepted
+        # in stage 'refit'.
+        "informational": {
+            "note": "like-for-like = x_scale=1.0 refit res.jac column norm / tight column norm, "
+                    "both at the refit point; informational, not a §7 figure",
+            "printed_definition_ratio": r1["printed_definition_ratio"],
+            "like_for_like_ratio_by_step": {
+                str(rel): {n_: rj[n_] / inv["col_norms"][str(rel)][n_] for n_ in PARAMS2}
+                for rel in REPRO_RELS},
+            "like_for_like_ratio_vs_richardson": {n_: rj[n_] / rich[n_] for n_ in PARAMS2},
+        },
+        "acceptance": [],
+    }
     if not inv["step_invariant"]:
-        raise SpecMismatch("tight Jacobian at the refit point is not step-invariant")
-    lfl = {n_: r1["jac_col_norms"][n_] / inv["col_norms"]["0.02"][n_] for n_ in PARAMS2}
-    rows = [
-        _accept("§7.4", "15.8", lfl["split"], ("dp", 1),
-                "x_scale=1.0 refit res.jac norm / tight norm, both at the refit point, split",
-                definition="like-for-like"),
-        _accept("§7.4", "45.0", lfl["R_cs"], ("dp", 1),
-                "x_scale=1.0 refit res.jac norm / tight norm, both at the refit point, R_cs",
-                definition="like-for-like"),
-    ]
-    return {"point": {"split": q[0], "R_cs": q[1], "source": "stage 'refit', x_scale=1.0"},
-            "gates": gates, "tight_jacobian": inv,
-            "ratios": {"printed_definition": r1["printed_definition_ratio"], "like_for_like": lfl},
-            "acceptance": rows}
+        raise GateFailed(f"tight Jacobian at the refit point is not step-invariant "
+                         f"(max_abs_rel_dev {inv['max_abs_rel_dev']:.3e})", block, informational=True)
+    return block
 
 
 # ---------------------------------------------------------------------------
@@ -2456,7 +2550,18 @@ def _run_derived(locked) -> dict:
 # Dispatcher
 # ---------------------------------------------------------------------------
 
-def run_repro(command: str, stage: str | None, workers: int, allow_dirty: bool) -> dict:
+EXIT_GATE_FAILED_ABORT = 2          # the run sequence stops
+EXIT_GATE_FAILED_INFORMATIONAL = 3  # recorded; the run sequence continues
+
+
+def run_repro(command: str, stage: str | None, workers: int, allow_dirty: bool) -> int:
+    """Run one reproducibility command/stage. Returns the process exit code.
+
+    A step-invariance gate failure writes the stage block with status
+    "gate_failed" before returning non-zero: 3 for an informational stage
+    (refit-jacobian), whose failure does not stop the run sequence, and 2
+    for every other stage, whose failure aborts it.
+    """
     t0 = time.time()
     prov = _provenance(allow_dirty)
     locked = load_locked()
@@ -2465,30 +2570,47 @@ def run_repro(command: str, stage: str | None, workers: int, allow_dirty: bool) 
     print(f"REPRODUCIBILITY: {command}" + (f" --stage {stage}" if stage else "")
           + f"   (HEAD {prov['git_head'][:10]}, dirty={prov['dirty']}, workers={workers})")
     _rule()
-    if command == "derived":
-        block, fname, analysis, key = _run_derived(locked), DERIVED_JSON, "phase_a_derived", None
-    elif command == "jacobian-diagnostic":
-        ctx = _repro_context(locked)
-        fname, analysis, key = JAC_JSON, "phase_a_jacobian_diagnostic", stage
-        if stage == "jacobian":
-            block = _stage_jacobian(locked, ctx, workers, book)
-        elif stage == "factorial":
-            block = _stage_factorial(locked, ctx, workers, book, _require_stage(JAC_JSON, "jacobian", prov))
-        elif stage == "refit":
-            block = _stage_refit(locked, ctx, workers, book, _require_stage(JAC_JSON, "jacobian", prov))
-        else:
-            block = _stage_refit_jacobian(locked, ctx, workers, book, _require_stage(JAC_JSON, "refit", prov))
-    elif command == "split-profile":
-        block, fname, analysis, key = (_run_split_profile(locked, workers, book), PROFILE_JSON,
-                                       "phase_a_split_profile", None)
-    elif command == "tolerance-bounds":
-        fname, analysis, key = TOLB_JSON, "phase_a_tolerance_bounds", stage
-        block = (_stage_labels if stage == "labels" else _stage_metrics)(locked, workers, book)
-    else:
+    targets = {"derived": (DERIVED_JSON, "phase_a_derived", None),
+               "jacobian-diagnostic": (JAC_JSON, "phase_a_jacobian_diagnostic", stage),
+               "split-profile": (PROFILE_JSON, "phase_a_split_profile", None),
+               "tolerance-bounds": (TOLB_JSON, "phase_a_tolerance_bounds", stage)}
+    if command not in targets:
         raise ValueError(command)
+    fname, analysis, key = targets[command]
+
+    status, rc, failure = "ok", 0, None
+    try:
+        if command == "derived":
+            block = _run_derived(locked)
+        elif command == "jacobian-diagnostic":
+            ctx = _repro_context(locked)
+            if stage == "jacobian":
+                block = _stage_jacobian(locked, ctx, workers, book)
+            elif stage == "factorial":
+                block = _stage_factorial(locked, ctx, workers, book,
+                                         _require_stage(JAC_JSON, "jacobian", prov))
+            elif stage == "refit":
+                block = _stage_refit(locked, ctx, workers, book,
+                                     _require_stage(JAC_JSON, "jacobian", prov))
+            else:
+                block = _stage_refit_jacobian(locked, ctx, workers, book,
+                                              _require_stage(JAC_JSON, "refit", prov))
+        elif command == "split-profile":
+            block = _run_split_profile(locked, workers, book)
+        else:
+            block = (_stage_labels if stage == "labels" else _stage_metrics)(locked, workers, book)
+    except GateFailed as gf:
+        block = gf.block
+        status = "gate_failed"
+        rc = EXIT_GATE_FAILED_INFORMATIONAL if gf.informational else EXIT_GATE_FAILED_ABORT
+        failure = {"message": str(gf), "informational": gf.informational, "exit_code": rc,
+                   "effect": ("recorded; the run sequence continues (informational stage)"
+                              if gf.informational else "the run sequence aborts")}
 
     elapsed = time.time() - t0
-    block = {"provenance": dict(prov, stage=stage, workers=workers, elapsed_s=elapsed,
+    block = {"status": status,
+             **({"gate_failure": failure} if failure else {}),
+             "provenance": dict(prov, stage=stage, workers=workers, elapsed_s=elapsed,
                                 tolerance_sets={"tight": REPRO_TIGHT, "loose_part1_residual": REPRO_LOOSE,
                                                 "label_and_step6": REPRO_LABEL}),
              "patch_verification": book.summary(), **block}
@@ -2497,7 +2619,10 @@ def run_repro(command: str, stage: str | None, workers: int, allow_dirty: bool) 
         _atomic_write(path, dict(analysis=analysis, **block))
     else:
         path = _write_stage(fname, analysis, key, block)
-    _print_acceptance(block["acceptance"])
+    if block["acceptance"]:
+        _print_acceptance(block["acceptance"])
+    else:
+        print("\n  ACCEPTANCE: no §7 rows in this stage")
     ps = block["patch_verification"]
     if ps["groups"]:
         print(f"\n  C2 patch log: {len(ps['groups'])} evaluation groups, "
@@ -2506,9 +2631,16 @@ def run_repro(command: str, stage: str | None, workers: int, allow_dirty: bool) 
               f"all match declared: {ps['all_groups_match_declared']}")
     else:
         print("\n  C2 patch log: n/a (no ODE evaluated)")
-    print(f"  wrote {path.relative_to(PROJECT_ROOT).as_posix()}   ({elapsed:.0f} s)")
+    try:
+        shown = path.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        shown = str(path)
+    print(f"  wrote {shown}   ({elapsed:.0f} s)   status={status}")
+    if failure:
+        print(f"\n  GATE FAILED: {failure['message']}")
+        print(f"  exit code {rc}: {failure['effect']}")
     _rule()
-    return block
+    return rc
 
 
 # ===========================================================================
@@ -2654,8 +2786,8 @@ def main() -> int:
         ap.error("--stage only applies to --jacobian-diagnostic and --tolerance-bounds")
     try:
         if command is not None:
-            run_repro(command, args.stage, args.workers, args.allow_dirty)
-        elif args.noise_diagnostic:
+            return run_repro(command, args.stage, args.workers, args.allow_dirty)
+        if args.noise_diagnostic:
             run_noise_diagnostic(h=args.h, workers=args.workers,
                                  file_id=args.file_id)
         else:
