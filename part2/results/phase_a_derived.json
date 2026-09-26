@@ -1,0 +1,285 @@
+{
+  "analysis": "phase_a_derived",
+  "status": "ok",
+  "provenance": {
+    "git_head": "aa119effbaa13432c282083c0eea8fb1b20c1e70",
+    "dirty": false,
+    "tracked_changes": [],
+    "untracked_files": [],
+    "md5": {
+      "data/calibration/calibration_results.json": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+      "part2/identifiability.py": "70276d29c8da645cd16e159c7f1de4f9",
+      "calibrate.py": "d08bbf44c1a693c4cb5694923658e62e",
+      "generate_labels.py": "c3b45e3595ee0eb9f1aa8d24e2f96958",
+      "thermal_model.py": "8bf725cef7af81431e1d4330eb549389"
+    },
+    "locked_calibration_md5_expected": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+    "python": "3.12.4",
+    "numpy": "1.26.4",
+    "scipy": "1.13.1",
+    "pandas": "2.2.2",
+    "matplotlib": "3.8.4",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "executable": "C:\\Users\\Avinash Nayal\\anaconda3\\python.exe",
+    "argv": [
+      "--derived"
+    ],
+    "started_utc": "2026-09-26T03:29:16+00:00",
+    "stage": null,
+    "workers": 12,
+    "elapsed_s": 0.3322029113769531,
+    "tolerance_sets": {
+      "tight": {
+        "rtol": 1e-10,
+        "atol": 1e-12,
+        "max_step": 5.0
+      },
+      "loose_part1_residual": {
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "max_step": 20.0
+      },
+      "label_and_step6": {
+        "rtol": 1e-06,
+        "atol": 1e-08,
+        "max_step": 5.0
+      }
+    }
+  },
+  "patch_verification": {
+    "assertions": [
+      "one tolerance cell per process pool; pools refuse other cells' tasks",
+      "workers refuse tasks for any cell other than their own",
+      "no worker process served more than one cell",
+      "every simulate_T call matched its group's declared (rtol, atol, max_step)"
+    ],
+    "all_groups_match_declared": null,
+    "workers_serving_more_than_one_cell": 0,
+    "tight_and_loose_shared_a_pool": false,
+    "worker_processes_by_cell": {},
+    "pools": [],
+    "groups": []
+  },
+  "description": "\u00a77 numbers that are arithmetic on leaves of the existing Phase A JSONs and the locked calibration JSON (no ODE).",
+  "inputs": [
+    "part2/results/phase_a_identifiability.json",
+    "part2/results/phase_a_noise_diagnostic.json",
+    "part2/results/phase_a_split_refit_diagnostic.json",
+    "data/calibration/calibration_results.json"
+  ],
+  "supplementary": {
+    "n_eff_scope": {
+      "us06_full_1Hz": {
+        "n": 4016,
+        "tau_int_s": 292.4928435472976,
+        "n_eff": 6.865125230577808
+      },
+      "three_cycles_full_1Hz": {
+        "n": 30066,
+        "n_eff": 51.396129278524
+      },
+      "three_cycles_stride10": {
+        "n": 3008,
+        "n_eff": 51.42006148799314
+      },
+      "note": "the three-cycle n_eff reuse US06's tau_int, measured at the locked central parameters; they are an extrapolation, not a three-cycle measurement"
+    }
+  },
+  "acceptance": [
+    {
+      "section": "\u00a77.1, \u00a77.6",
+      "printed": "5",
+      "regenerated": 5.068615596406346,
+      "regenerated_at_printed_precision": 5.0,
+      "precision": "sf1",
+      "match": true,
+      "source": "S band.locked_json.spread_max",
+      "qualifier": "~"
+    },
+    {
+      "section": "\u00a77.1",
+      "printed": "0.43",
+      "regenerated": 0.4320000000000196,
+      "regenerated_at_printed_precision": 0.43,
+      "precision": "dp2",
+      "match": true,
+      "source": "(1 - S fits[central].split) x C_total"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "0.432",
+      "regenerated": 0.4320000000000196,
+      "regenerated_at_printed_precision": 0.432,
+      "precision": "dp3",
+      "match": true,
+      "source": "(1 - S fits[central].split) x C_total"
+    },
+    {
+      "section": "\u00a77.2",
+      "printed": "50",
+      "regenerated": 50.0,
+      "regenerated_at_printed_precision": 50.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "A step2_h_sweep.per_h[*].h, max / min"
+    },
+    {
+      "section": "\u00a77.4",
+      "printed": "52",
+      "regenerated": 51.66313887423383,
+      "regenerated_at_printed_precision": 52.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "N part1_week2_crb.stride10.ratio_vs_week2_reported"
+    },
+    {
+      "section": "\u00a77.4",
+      "printed": "17",
+      "regenerated": 16.976529947191125,
+      "regenerated_at_printed_precision": 17.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "N stride10.crb_rel_ci95_pct.split / operating_point.reported_ci95_pct_split"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "4.21",
+      "regenerated": 4.207440903517191,
+      "regenerated_at_printed_precision": 4.21,
+      "precision": "dp2",
+      "match": true,
+      "source": "100 (S fits[low].split - locked) / locked"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "6.65",
+      "regenerated": 6.650017591033789,
+      "regenerated_at_printed_precision": 6.65,
+      "precision": "dp2",
+      "match": true,
+      "source": "100 (S fits[central].split - locked) / locked"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "6.45",
+      "regenerated": 6.451612903225788,
+      "regenerated_at_printed_precision": 6.45,
+      "precision": "dp2",
+      "match": true,
+      "source": "100 (S fits[high].split - locked) / locked"
+    },
+    {
+      "section": "\u00a77.6",
+      "printed": "0.055",
+      "regenerated": 0.055388017252151936,
+      "regenerated_at_printed_precision": 0.055,
+      "precision": "dp3",
+      "match": true,
+      "source": "S band: (locked_json - locked_splits_tight) / locked_json, %"
+    },
+    {
+      "section": "\u00a77.6",
+      "printed": "0.05",
+      "regenerated": 0.05087132165849084,
+      "regenerated_at_printed_precision": 0.05,
+      "precision": "dp2",
+      "match": true,
+      "source": "S band: locked_json - new_splits, \u00b0C"
+    },
+    {
+      "section": "\u00a77.6",
+      "printed": "1",
+      "regenerated": 1.0036531808519602,
+      "regenerated_at_printed_precision": 1.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "same, as % of the locked spread",
+      "qualifier": "about one percent"
+    },
+    {
+      "section": "\u00a77.6",
+      "printed": "7",
+      "regenerated": 7.173011091633083,
+      "regenerated_at_printed_precision": 7.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "locked C_surf / C_surf at split 0.99",
+      "qualifier": "sevenfold"
+    },
+    {
+      "section": "\u00a77.7",
+      "printed": "225",
+      "regenerated": 224.90819073080024,
+      "regenerated_at_printed_precision": 225.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "R_sa x C_total, s"
+    },
+    {
+      "section": "\u00a77.7",
+      "printed": "82",
+      "regenerated": 81.47124747725888,
+      "regenerated_at_printed_precision": 81.0,
+      "precision": "dp0",
+      "match": false,
+      "source": "N part2_autocorrelation: mean^2 / rms^2, % of residual variance",
+      "qualifier": "roughly"
+    },
+    {
+      "section": "\u00a77.7",
+      "printed": "18",
+      "regenerated": 18.528752522741108,
+      "regenerated_at_printed_precision": 19.0,
+      "precision": "dp0",
+      "match": false,
+      "source": "1 - mean^2 / rms^2, %"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "93",
+      "regenerated": 92.82698890836659,
+      "regenerated_at_printed_precision": 93.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "locked split, %"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "7",
+      "regenerated": 7.173011091633407,
+      "regenerated_at_printed_precision": 7.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "1 - locked split, %"
+    },
+    {
+      "section": "\u00a77.7",
+      "printed": "7",
+      "regenerated": 6.865125230577808,
+      "regenerated_at_printed_precision": 7.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "N part2_autocorrelation.n_eff",
+      "qualifier": "about"
+    },
+    {
+      "section": "\u00a77.7",
+      "printed": "4016",
+      "regenerated": 4016,
+      "regenerated_at_printed_precision": "4016",
+      "precision": "eq",
+      "match": true,
+      "source": "N part2_autocorrelation.n"
+    },
+    {
+      "section": "\u00a77.6, \u00a77.7",
+      "printed": "5",
+      "regenerated": 5.000000000000001,
+      "regenerated_at_printed_precision": 5.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "N part3_corrected.step5_band.ratio_high_over_low",
+      "qualifier": "factor of five"
+    }
+  ]
+}

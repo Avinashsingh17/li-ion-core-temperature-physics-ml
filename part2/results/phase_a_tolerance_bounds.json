@@ -1,0 +1,1909 @@
+{
+  "analysis": "phase_a_tolerance_bounds",
+  "stages": {
+    "labels": {
+      "status": "ok",
+      "provenance": {
+        "git_head": "aa119effbaa13432c282083c0eea8fb1b20c1e70",
+        "dirty": false,
+        "tracked_changes": [],
+        "untracked_files": [
+          "part2/results/phase_a_derived.json",
+          "part2/results/phase_a_jacobian_diagnostic.json",
+          "part2/results/phase_a_split_profile.json"
+        ],
+        "md5": {
+          "data/calibration/calibration_results.json": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+          "part2/identifiability.py": "70276d29c8da645cd16e159c7f1de4f9",
+          "calibrate.py": "d08bbf44c1a693c4cb5694923658e62e",
+          "generate_labels.py": "c3b45e3595ee0eb9f1aa8d24e2f96958",
+          "thermal_model.py": "8bf725cef7af81431e1d4330eb549389"
+        },
+        "locked_calibration_md5_expected": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+        "python": "3.12.4",
+        "numpy": "1.26.4",
+        "scipy": "1.13.1",
+        "pandas": "2.2.2",
+        "matplotlib": "3.8.4",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "executable": "C:\\Users\\Avinash Nayal\\anaconda3\\python.exe",
+        "argv": [
+          "--tolerance-bounds",
+          "--stage",
+          "labels",
+          "--workers",
+          "14"
+        ],
+        "started_utc": "2026-09-26T03:58:46+00:00",
+        "stage": "labels",
+        "workers": 14,
+        "elapsed_s": 395.4456171989441,
+        "tolerance_sets": {
+          "tight": {
+            "rtol": 1e-10,
+            "atol": 1e-12,
+            "max_step": 5.0
+          },
+          "loose_part1_residual": {
+            "rtol": 0.001,
+            "atol": 1e-05,
+            "max_step": 20.0
+          },
+          "label_and_step6": {
+            "rtol": 1e-06,
+            "atol": 1e-08,
+            "max_step": 5.0
+          }
+        }
+      },
+      "patch_verification": {
+        "assertions": [
+          "one tolerance cell per process pool; pools refuse other cells' tasks",
+          "workers refuse tasks for any cell other than their own",
+          "no worker process served more than one cell",
+          "every simulate_T call matched its group's declared (rtol, atol, max_step)"
+        ],
+        "all_groups_match_declared": true,
+        "workers_serving_more_than_one_cell": 0,
+        "tight_and_loose_shared_a_pool": false,
+        "worker_processes_by_cell": {
+          "tight": 12,
+          "label_native": 4
+        },
+        "pools": [
+          {
+            "pool": 1,
+            "cell": "tight",
+            "max_workers": 14
+          },
+          {
+            "pool": 2,
+            "cell": "label_native",
+            "max_workers": 3
+          },
+          {
+            "pool": 3,
+            "cell": "tight",
+            "max_workers": 1
+          },
+          {
+            "pool": 4,
+            "cell": "label_native",
+            "max_workers": 1
+          }
+        ],
+        "groups": [
+          {
+            "group": "determinism gate, pool A: label-constant central trace, US06",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              91308
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "determinism gate, pool B: label-constant central trace, US06",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              71396
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "determinism gate, pool A: label-constant central trace, US06",
+            "cell": "label_native",
+            "wrapper_mode": "pass-through",
+            "declared": {
+              "rtol": 1e-06,
+              "atol": 1e-08,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-06,
+                "atol": 1e-08,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              83484
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "determinism gate, pool B: label-constant central trace, US06",
+            "cell": "label_native",
+            "wrapper_mode": "pass-through",
+            "declared": {
+              "rtol": 1e-06,
+              "atol": 1e-08,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-06,
+                "atol": 1e-08,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              99912
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "tight: generate_labels.label_one_cycle, 11 cycles",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 33
+              }
+            ],
+            "tasks": 11,
+            "simulate_T_calls": 33,
+            "worker_processes": 11,
+            "pids": [
+              56528,
+              77760,
+              79740,
+              80752,
+              81368,
+              87848,
+              91308,
+              92060,
+              94164,
+              98500,
+              101096
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "label-native: generate_labels.label_one_cycle, 11 cycles",
+            "cell": "label_native",
+            "wrapper_mode": "pass-through",
+            "declared": {
+              "rtol": 1e-06,
+              "atol": 1e-08,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-06,
+                "atol": 1e-08,
+                "max_step": 5.0,
+                "calls": 33
+              }
+            ],
+            "tasks": 11,
+            "simulate_T_calls": 33,
+            "worker_processes": 3,
+            "pids": [
+              83484,
+              88896,
+              90188
+            ],
+            "all_calls_match_declared": true
+          }
+        ]
+      },
+      "description": "generate_labels.label_one_cycle (Part 1's label function) at its native tolerance and at tight tolerance, all 11 labeled cycles, against data/labeled/ (read-only).",
+      "label_constants": {
+        "T_INF_25C_C": 23.15,
+        "R_SA_K_PER_W": 5.21,
+        "band_splits": {
+          "low": {
+            "R_cs": 1.697196924251166,
+            "split": 0.9500281272456831,
+            "source": "summary"
+          },
+          "central": {
+            "R_cs": 3.394393848502332,
+            "split": 0.9282698890836659,
+            "source": "summary"
+          },
+          "high": {
+            "R_cs": 8.485984621255831,
+            "split": 0.93,
+            "source": "summary"
+          }
+        }
+      },
+      "gates": [
+        {
+          "name": "label-constant central trace, US06",
+          "cell": "tight",
+          "tasks_per_side": 1,
+          "values_compared": 8032,
+          "pids_a": [
+            91308
+          ],
+          "pids_b": [
+            71396
+          ],
+          "different_processes": true,
+          "bitwise_identical": true,
+          "max_abs_diff": 0.0,
+          "passed": true
+        },
+        {
+          "name": "label-constant central trace, US06",
+          "cell": "label_native",
+          "tasks_per_side": 1,
+          "values_compared": 8032,
+          "pids_a": [
+            83484
+          ],
+          "pids_b": [
+            99912
+          ],
+          "different_processes": true,
+          "bitwise_identical": true,
+          "max_abs_diff": 0.0,
+          "passed": true
+        }
+      ],
+      "per_cycle": {
+        "LG_25degC_UDDS_10-28-18_17.44_551_UDDS_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.00770857397225555,
+              "rms_K": 0.0018019833275534976
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.010941497617679374,
+              "rms_K": 0.002662501452833425
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009267092448013159,
+              "rms_K": 0.0019886255407807513
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.0030778864906793046,
+              "rms_K": 0.0009120411175922421
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.003855894550994776,
+              "rms_K": 0.0012050180042970228
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0035022837693681197,
+              "rms_K": 0.0011737396138143009
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.012121937690672269,
+              "rms_K": 0.0036422028618500277
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.012279094015489989,
+              "rms_K": 0.0039057745842392758
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009708419217577813,
+              "rms_K": 0.003058686616655672
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.004087587401460979,
+              "rms_K": 0.0010810999680748565
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.006211916045710808,
+              "rms_K": 0.0015991628666167435
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0046740369234612444,
+              "rms_K": 0.0011933981859678345
+            }
+          }
+        },
+        "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.013244544186651552,
+              "rms_K": 0.0036829609752313253
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.013349697651189985,
+              "rms_K": 0.0034905033532781553
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.008332133822857912,
+              "rms_K": 0.002454057974789095
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.00522776056324048,
+              "rms_K": 0.0016641812056054533
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.006080775273147765,
+              "rms_K": 0.002084836949516597
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0049630204233857,
+              "rms_K": 0.0015500326065016994
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.018989875775915266,
+              "rms_K": 0.005424391586302852
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.016193058480915568,
+              "rms_K": 0.006165440282073155
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.014926797988454865,
+              "rms_K": 0.005934306161707634
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.007735462674745008,
+              "rms_K": 0.002217008510722737
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.0077571321101643775,
+              "rms_K": 0.002089331924979617
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.004870870050467602,
+              "rms_K": 0.0014677259993790405
+            }
+          }
+        },
+        "LG_25degC_Mixed8_10-31-18_10.05_552_Mixed8_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.011976524322822257,
+              "rms_K": 0.0024981626854930663
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.009878548634542739,
+              "rms_K": 0.0030992052295290506
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009287618953472077,
+              "rms_K": 0.0027726228940917557
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.008540908747360021,
+              "rms_K": 0.0015731919924774523
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.005853046991951771,
+              "rms_K": 0.001487697248292247
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0080572019351699,
+              "rms_K": 0.0014727096126047777
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.008837584525430486,
+              "rms_K": 0.002958538989526528
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.015161068874888883,
+              "rms_K": 0.00483034407808494
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009342557989839406,
+              "rms_K": 0.0034120142678731834
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.006985228908412466,
+              "rms_K": 0.0014979434354370832
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.0055674248795831716,
+              "rms_K": 0.0018538294073630246
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.005452076599695488,
+              "rms_K": 0.0016648395219675267
+            }
+          }
+        },
+        "LG_25degC_Mixed4_10-30-18_11.56_552_Mixed4_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.010109794213249756,
+              "rms_K": 0.0030623410855327867
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.011386762634014502,
+              "rms_K": 0.004189794273023458
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.007189539361672104,
+              "rms_K": 0.0024206833853179116
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.005503238220875062,
+              "rms_K": 0.0012645746631845503
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.008149516011243918,
+              "rms_K": 0.0018145609083900182
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.005124791008601193,
+              "rms_K": 0.0013274758348186522
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.009347035324481112,
+              "rms_K": 0.004283315313332238
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.012847282558386297,
+              "rms_K": 0.00516765280572452
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.01614012488479588,
+              "rms_K": 0.003876473393380138
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.005835337186390177,
+              "rms_K": 0.001840500448243819
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.00655115202055967,
+              "rms_K": 0.0025190810293681527
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0038880211341627557,
+              "rms_K": 0.001450673646283718
+            }
+          }
+        },
+        "LG_25degC_Mixed2_10-29-18_20.16_551_Mixed2_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.006959552823705195,
+              "rms_K": 0.0024590391743708846
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.008493106216626245,
+              "rms_K": 0.002370979080373026
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.01063058893598523,
+              "rms_K": 0.002672857071344156
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.0070829388782485125,
+              "rms_K": 0.0018718229199415866
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.007428417340214821,
+              "rms_K": 0.0018769553767371545
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0051115727334121175,
+              "rms_K": 0.0015295228653461226
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.012685525399305675,
+              "rms_K": 0.003621272428249568
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.013615216667485441,
+              "rms_K": 0.005200483195013736
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.011105601663025766,
+              "rms_K": 0.003214349320751207
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.004034751474900844,
+              "rms_K": 0.0014726560745373176
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.004831965356103751,
+              "rms_K": 0.0014036615587308071
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0062295668759233536,
+              "rms_K": 0.0016021127497846633
+            }
+          }
+        },
+        "LG_25degC_Mixed6_10-30-18_23.02_552_Mixed6_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.009852624923993858,
+              "rms_K": 0.002451648464246855
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.015530447351842724,
+              "rms_K": 0.00403733843340204
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.010969044051147847,
+              "rms_K": 0.0025458264829580877
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.006139587716219808,
+              "rms_K": 0.0013768955759649135
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.00747054076365572,
+              "rms_K": 0.0022127205268060927
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.005501050190243717,
+              "rms_K": 0.0015012837700756265
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.01031385979023014,
+              "rms_K": 0.003928385892161756
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.01688493040465744,
+              "rms_K": 0.005895418165782144
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009500993341188035,
+              "rms_K": 0.003418125207727738
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.005674488371521846,
+              "rms_K": 0.001469377298763301
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.008822624372040622,
+              "rms_K": 0.0024305667030244953
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.006256272752246161,
+              "rms_K": 0.0015293939326059573
+            }
+          }
+        },
+        "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.012256951724683773,
+              "rms_K": 0.002596309053537089
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.013849620775975069,
+              "rms_K": 0.0035279789157717477
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.006538697396301529,
+              "rms_K": 0.0021678561008586046
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.007853732220951315,
+              "rms_K": 0.002294221747935338
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.008254822072366608,
+              "rms_K": 0.0021498876227258735
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.00504539341531185,
+              "rms_K": 0.0015762774631850212
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.017196879189185665,
+              "rms_K": 0.00456611551599754
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.02229370394245933,
+              "rms_K": 0.006806776194895757
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.012201757649123124,
+              "rms_K": 0.0040272361283898925
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.007158516459302433,
+              "rms_K": 0.0015563069305742615
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.007818274657193314,
+              "rms_K": 0.002116171627354567
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.0035771816360536945,
+              "rms_K": 0.0012955804772816395
+            }
+          }
+        },
+        "LG_25degC_Mixed3_10-30-18_06.27_552_Mixed3_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.00927303881574204,
+              "rms_K": 0.0027380880855854086
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.012549954569440303,
+              "rms_K": 0.004006308620834128
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.008726204740046484,
+              "rms_K": 0.002969970994593572
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.008622759754210563,
+              "rms_K": 0.0017444704344773126
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.012469467367498765,
+              "rms_K": 0.0032730576498133175
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.008477041895275761,
+              "rms_K": 0.0023834338549810585
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.010331098930489446,
+              "rms_K": 0.0033056143431425666
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.01250845439830428,
+              "rms_K": 0.004641520250517823
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.013987240478417817,
+              "rms_K": 0.004933726959283536
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.005344224098951855,
+              "rms_K": 0.0016433103354546758
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.007332367899948622,
+              "rms_K": 0.0024070870157206015
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.004946732808033261,
+              "rms_K": 0.0017840373311039412
+            }
+          }
+        },
+        "LG_25degC_Mixed7_10-31-18_04.38_552_Mixed7_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.009547954127238967,
+              "rms_K": 0.002745629462849811
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.013874640927323156,
+              "rms_K": 0.0029810650385463894
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.011782031096895906,
+              "rms_K": 0.002316147609865392
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.00636736614796618,
+              "rms_K": 0.0018288341310423793
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.007796473807378135,
+              "rms_K": 0.0022972575523426924
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.004322752679986053,
+              "rms_K": 0.0014475068184599221
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.013307374435321151,
+              "rms_K": 0.0048900413890323345
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.020809842294930547,
+              "rms_K": 0.006080991123778484
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.010024972644302466,
+              "rms_K": 0.0031004475290087037
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.005551230456269707,
+              "rms_K": 0.0016485101152731245
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.007894944293781236,
+              "rms_K": 0.0017776544368506512
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.006656899313597364,
+              "rms_K": 0.0013813035860897117
+            }
+          }
+        },
+        "LG_25degC_Mixed5_10-30-18_17.36_552_Mixed5_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.008897777234881943,
+              "rms_K": 0.002468386930048487
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.011931916603803217,
+              "rms_K": 0.003195195584971256
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.015459013077126826,
+              "rms_K": 0.0038999921023036045
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.004921294798908349,
+              "rms_K": 0.0016003638758807894
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.006233665405531497,
+              "rms_K": 0.0023340559915317346
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.006327225368654155,
+              "rms_K": 0.0017856946006670194
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.013850633979611615,
+              "rms_K": 0.004387100592696378
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.02444169831586862,
+              "rms_K": 0.006086199807789034
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.013456348641678773,
+              "rms_K": 0.0037538538090256955
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.005055916570189112,
+              "rms_K": 0.0014804744830903128
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.006727935471555924,
+              "rms_K": 0.0019114092483916974
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009050848402200273,
+              "rms_K": 0.0023514759456539375
+            }
+          }
+        },
+        "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet": {
+          "T_core_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.008340366708019076,
+              "rms_K": 0.0030690652976656306
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.01757905122740766,
+              "rms_K": 0.005955896018549534
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.01596739880015363,
+              "rms_K": 0.004788300676463003
+            }
+          },
+          "T_core_model_lo_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.009959228413070065,
+              "rms_K": 0.003362045478526094
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.012667566733018276,
+              "rms_K": 0.004419452518270909
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.010129831534221978,
+              "rms_K": 0.0035069867526819907
+            }
+          },
+          "T_core_model_hi_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.021957987845809157,
+              "rms_K": 0.007829483797581182
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.0258550886114719,
+              "rms_K": 0.011192315175260916
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.013272173280132193,
+              "rms_K": 0.005792573025849971
+            }
+          },
+          "T_surf_model_C": {
+            "tight_vs_stored": {
+              "max_abs_K": 0.004596193388419323,
+              "rms_K": 0.0018349094973197642
+            },
+            "native_vs_stored": {
+              "max_abs_K": 0.010273270383997612,
+              "rms_K": 0.003578996350325075
+            },
+            "tight_vs_native": {
+              "max_abs_K": 0.009303962459128456,
+              "rms_K": 0.002879591669676587
+            }
+          }
+        }
+      },
+      "maxima": {
+        "tight_vs_stored": {
+          "max_abs_K": {
+            "value_K": 0.021957987845809157,
+            "cycle": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+            "channel": "T_core_model_hi_C"
+          },
+          "rms_K": {
+            "value_K": 0.007829483797581182,
+            "cycle": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+            "channel": "T_core_model_hi_C"
+          }
+        },
+        "native_vs_stored": {
+          "max_abs_K": {
+            "value_K": 0.0258550886114719,
+            "cycle": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+            "channel": "T_core_model_hi_C"
+          },
+          "rms_K": {
+            "value_K": 0.011192315175260916,
+            "cycle": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+            "channel": "T_core_model_hi_C"
+          }
+        },
+        "tight_vs_native": {
+          "max_abs_K": {
+            "value_K": 0.01614012488479588,
+            "cycle": "LG_25degC_Mixed4_10-30-18_11.56_552_Mixed4_25degC_LGHG2.parquet",
+            "channel": "T_core_model_hi_C"
+          },
+          "rms_K": {
+            "value_K": 0.005934306161707634,
+            "cycle": "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2.parquet",
+            "channel": "T_core_model_hi_C"
+          }
+        }
+      },
+      "us06_T_core_rms_tight_vs_stored_K": 0.0030690652976656306,
+      "acceptance": [
+        {
+          "section": "\u00a77.6",
+          "printed": "0.02",
+          "regenerated": 0.021957987845809157,
+          "regenerated_at_printed_precision": 0.021957987845809157,
+          "precision": "<=",
+          "match": false,
+          "source": "max |tight - stored| over 11 cycles x 4 stored channels",
+          "qualifier": "bound: '<= 2e-2 \u00b0C on any trace'"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "3e-3",
+          "regenerated": 0.0030690652976656306,
+          "regenerated_at_printed_precision": 0.003,
+          "precision": "sf1",
+          "match": true,
+          "source": "US06 T_core, rms |tight - stored|",
+          "qualifier": "roughly"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "(1e-06, 1e-08, 5.0)",
+          "regenerated": "(1e-06, 1e-08, 5.0)",
+          "regenerated_at_printed_precision": "(1e-06, 1e-08, 5.0)",
+          "precision": "eq",
+          "match": true,
+          "source": "solver arguments generate_labels actually passed (C2 log)",
+          "note": "printed as rtol = 1e-6, atol = 1e-8"
+        }
+      ]
+    },
+    "metrics": {
+      "status": "ok",
+      "provenance": {
+        "git_head": "aa119effbaa13432c282083c0eea8fb1b20c1e70",
+        "dirty": false,
+        "tracked_changes": [],
+        "untracked_files": [
+          "part2/results/phase_a_derived.json",
+          "part2/results/phase_a_jacobian_diagnostic.json",
+          "part2/results/phase_a_split_profile.json",
+          "part2/results/phase_a_tolerance_bounds.json"
+        ],
+        "md5": {
+          "data/calibration/calibration_results.json": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+          "part2/identifiability.py": "70276d29c8da645cd16e159c7f1de4f9",
+          "calibrate.py": "d08bbf44c1a693c4cb5694923658e62e",
+          "generate_labels.py": "c3b45e3595ee0eb9f1aa8d24e2f96958",
+          "thermal_model.py": "8bf725cef7af81431e1d4330eb549389"
+        },
+        "locked_calibration_md5_expected": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+        "python": "3.12.4",
+        "numpy": "1.26.4",
+        "scipy": "1.13.1",
+        "pandas": "2.2.2",
+        "matplotlib": "3.8.4",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "executable": "C:\\Users\\Avinash Nayal\\anaconda3\\python.exe",
+        "argv": [
+          "--tolerance-bounds",
+          "--stage",
+          "metrics",
+          "--workers",
+          "14"
+        ],
+        "started_utc": "2026-09-26T04:05:31+00:00",
+        "stage": "metrics",
+        "workers": 14,
+        "elapsed_s": 260.5089316368103,
+        "tolerance_sets": {
+          "tight": {
+            "rtol": 1e-10,
+            "atol": 1e-12,
+            "max_step": 5.0
+          },
+          "loose_part1_residual": {
+            "rtol": 0.001,
+            "atol": 1e-05,
+            "max_step": 20.0
+          },
+          "label_and_step6": {
+            "rtol": 1e-06,
+            "atol": 1e-08,
+            "max_step": 5.0
+          }
+        }
+      },
+      "patch_verification": {
+        "assertions": [
+          "one tolerance cell per process pool; pools refuse other cells' tasks",
+          "workers refuse tasks for any cell other than their own",
+          "no worker process served more than one cell",
+          "every simulate_T call matched its group's declared (rtol, atol, max_step)"
+        ],
+        "all_groups_match_declared": true,
+        "workers_serving_more_than_one_cell": 0,
+        "tight_and_loose_shared_a_pool": false,
+        "worker_processes_by_cell": {
+          "tight": 15,
+          "label_native": 4
+        },
+        "pools": [
+          {
+            "pool": 1,
+            "cell": "tight",
+            "max_workers": 14
+          },
+          {
+            "pool": 2,
+            "cell": "label_native",
+            "max_workers": 3
+          },
+          {
+            "pool": 3,
+            "cell": "tight",
+            "max_workers": 1
+          },
+          {
+            "pool": 4,
+            "cell": "label_native",
+            "max_workers": 1
+          }
+        ],
+        "groups": [
+          {
+            "group": "determinism gate, pool A: calibrate.evaluate_on_cycle, US06",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              102324
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "determinism gate, pool B: calibrate.evaluate_on_cycle, US06",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              107292
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "determinism gate, pool A: calibrate.evaluate_on_cycle, US06",
+            "cell": "label_native",
+            "wrapper_mode": "pass-through",
+            "declared": {
+              "rtol": 1e-06,
+              "atol": 1e-08,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-06,
+                "atol": 1e-08,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              105616
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "determinism gate, pool B: calibrate.evaluate_on_cycle, US06",
+            "cell": "label_native",
+            "wrapper_mode": "pass-through",
+            "declared": {
+              "rtol": 1e-06,
+              "atol": 1e-08,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-06,
+                "atol": 1e-08,
+                "max_step": 5.0,
+                "calls": 1
+              }
+            ],
+            "tasks": 1,
+            "simulate_T_calls": 1,
+            "worker_processes": 1,
+            "pids": [
+              117480
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "tight: calibrate.evaluate_on_cycle, 14 cycles",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 14
+              }
+            ],
+            "tasks": 14,
+            "simulate_T_calls": 14,
+            "worker_processes": 14,
+            "pids": [
+              61052,
+              67304,
+              90540,
+              102324,
+              103116,
+              106588,
+              108432,
+              110700,
+              111396,
+              111548,
+              111660,
+              113860,
+              115248,
+              115740
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "tight: label-constant central trace, 11 cycles",
+            "cell": "tight",
+            "wrapper_mode": "override",
+            "declared": {
+              "rtol": 1e-10,
+              "atol": 1e-12,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-10,
+                "atol": 1e-12,
+                "max_step": 5.0,
+                "calls": 11
+              }
+            ],
+            "tasks": 11,
+            "simulate_T_calls": 11,
+            "worker_processes": 11,
+            "pids": [
+              61052,
+              67304,
+              103116,
+              106588,
+              108432,
+              110700,
+              111396,
+              111548,
+              113860,
+              115248,
+              115740
+            ],
+            "all_calls_match_declared": true
+          },
+          {
+            "group": "label-native: calibrate.evaluate_on_cycle, 14 cycles",
+            "cell": "label_native",
+            "wrapper_mode": "pass-through",
+            "declared": {
+              "rtol": 1e-06,
+              "atol": 1e-08,
+              "max_step": 5.0
+            },
+            "observed": [
+              {
+                "rtol": 1e-06,
+                "atol": 1e-08,
+                "max_step": 5.0,
+                "calls": 14
+              }
+            ],
+            "tasks": 14,
+            "simulate_T_calls": 14,
+            "worker_processes": 3,
+            "pids": [
+              35356,
+              89524,
+              105616
+            ],
+            "all_calls_match_declared": true
+          }
+        ]
+      },
+      "description": "calibrate.evaluate_on_cycle (Part 1's Step-6 metric function) at its native tolerance and at tight tolerance on the 11 labeled cycles plus the 3 other Step-6 cycles; rounding-only = locked constants vs generate_labels' rounded constants, both tight.",
+      "central_params": {
+        "C_core": 40.10125920841437,
+        "C_surf": 3.0987407915856324,
+        "R_cs": 3.394393848502332,
+        "R_sa": 5.206208118768524
+      },
+      "gates": [
+        {
+          "name": "calibrate.evaluate_on_cycle, US06",
+          "cell": "tight",
+          "tasks_per_side": 1,
+          "values_compared": 8032,
+          "pids_a": [
+            102324
+          ],
+          "pids_b": [
+            107292
+          ],
+          "different_processes": true,
+          "bitwise_identical": true,
+          "max_abs_diff": 0.0,
+          "passed": true
+        },
+        {
+          "name": "calibrate.evaluate_on_cycle, US06",
+          "cell": "label_native",
+          "tasks_per_side": 1,
+          "values_compared": 8032,
+          "pids_a": [
+            105616
+          ],
+          "pids_b": [
+            117480
+          ],
+          "different_processes": true,
+          "bitwise_identical": true,
+          "max_abs_diff": 0.0,
+          "passed": true
+        }
+      ],
+      "per_cycle": {
+        "LG_25degC_UDDS_10-28-18_17.44_551_UDDS_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.49744996872538055,
+              "native_1e-6": 0.49790299501581625,
+              "tight_minus_native": -0.00045302629043569853
+            },
+            "mae_C": {
+              "tight": 0.4831501803459045,
+              "native_1e-6": 0.48363234255134063,
+              "tight_minus_native": -0.00048216220543612076
+            },
+            "max_abs_err_C": {
+              "tight": 0.8896166137474637,
+              "native_1e-6": 0.8903498911228169,
+              "tight_minus_native": -0.0007332773753532251
+            }
+          }
+        },
+        "LG_10degC_UDDS_11-20-18_03.10_576_UDDS_10degC_LGHG2.parquet": {
+          "T_inf_C": 9.180146631775237,
+          "in_step6": true,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.4678221854313384,
+              "native_1e-6": 0.46746296912113877,
+              "tight_minus_native": 0.0003592163101996393,
+              "locked": 0.4675399546426656,
+              "tight_minus_locked": 0.00028223078867278817,
+              "native_minus_locked": -7.698552152685112e-05
+            },
+            "mae_C": {
+              "tight": 0.44913868091645787,
+              "native_1e-6": 0.44879589821409865,
+              "tight_minus_native": 0.00034278270235921227,
+              "locked": 0.4488695978747823,
+              "tight_minus_locked": 0.0002690830416755552,
+              "native_minus_locked": -7.369966068365708e-05
+            },
+            "max_abs_err_C": {
+              "tight": 0.9919260135893282,
+              "native_1e-6": 0.990585104031469,
+              "tight_minus_native": 0.001340909557859149,
+              "locked": 0.9910253925193775,
+              "tight_minus_locked": 0.0009006210699507022,
+              "native_minus_locked": -0.00044028848790844677
+            }
+          }
+        },
+        "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.3288018094155977,
+              "native_1e-6": 0.3302158391080191,
+              "tight_minus_native": -0.0014140296924213813
+            },
+            "mae_C": {
+              "tight": 0.2905080064129166,
+              "native_1e-6": 0.2918424897003053,
+              "tight_minus_native": -0.0013344832873887214
+            },
+            "max_abs_err_C": {
+              "tight": 0.8566084226712576,
+              "native_1e-6": 0.857586142493254,
+              "tight_minus_native": -0.000977719821996459
+            }
+          }
+        },
+        "LG_25degC_Mixed8_10-31-18_10.05_552_Mixed8_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.3684868482252674,
+              "native_1e-6": 0.36835920266750005,
+              "tight_minus_native": 0.00012764555776734188
+            },
+            "mae_C": {
+              "tight": 0.31272593234173396,
+              "native_1e-6": 0.31261610517657773,
+              "tight_minus_native": 0.00010982716515622881
+            },
+            "max_abs_err_C": {
+              "tight": 1.087744593988301,
+              "native_1e-6": 1.087653207718649,
+              "tight_minus_native": 9.138626965210506e-05
+            }
+          }
+        },
+        "LG_0degC_LA92_11-30-18_13.24_589_LA92_0degC_LGHG2.parquet": {
+          "T_inf_C": -0.6583156517174993,
+          "in_step6": true,
+          "metrics": {
+            "rmse_C": {
+              "tight": 1.0371038153427419,
+              "native_1e-6": 1.0370123080002966,
+              "tight_minus_native": 9.150734244522951e-05,
+              "locked": 1.036994933831176,
+              "tight_minus_locked": 0.00010888151156596138,
+              "native_minus_locked": 1.7374169120731864e-05
+            },
+            "mae_C": {
+              "tight": 0.9749635142768571,
+              "native_1e-6": 0.9748808395892689,
+              "tight_minus_native": 8.26746875882689e-05,
+              "locked": 0.9748414589060641,
+              "tight_minus_locked": 0.0001220553707930172,
+              "native_minus_locked": 3.93806832047483e-05
+            },
+            "max_abs_err_C": {
+              "tight": 2.0176677625940593,
+              "native_1e-6": 2.016907369659602,
+              "tight_minus_native": 0.00076039293445751,
+              "locked": 2.0175808224981804,
+              "tight_minus_locked": 8.694009587895124e-05,
+              "native_minus_locked": -0.0006734528385785588
+            }
+          }
+        },
+        "LG_25degC_Mixed4_10-30-18_11.56_552_Mixed4_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.33254277836948376,
+              "native_1e-6": 0.33222572542568485,
+              "tight_minus_native": 0.00031705294379891225
+            },
+            "mae_C": {
+              "tight": 0.26927164071401316,
+              "native_1e-6": 0.26905890451081566,
+              "tight_minus_native": 0.00021273620319750552
+            },
+            "max_abs_err_C": {
+              "tight": 0.9762774306281905,
+              "native_1e-6": 0.9739679736729094,
+              "tight_minus_native": 0.002309456955281064
+            }
+          }
+        },
+        "LG_25degC_Mixed2_10-29-18_20.16_551_Mixed2_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": true,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.37949027775101407,
+              "native_1e-6": 0.37890477671553136,
+              "tight_minus_native": 0.0005855010354827161,
+              "locked": 0.37971071419999597,
+              "tight_minus_locked": -0.00022043644898189774,
+              "native_minus_locked": -0.0008059374844646139
+            },
+            "mae_C": {
+              "tight": 0.32386088261729007,
+              "native_1e-6": 0.3234283905763656,
+              "tight_minus_native": 0.00043249204092449256,
+              "locked": 0.32414219779057585,
+              "tight_minus_locked": -0.0002813151732857788,
+              "native_minus_locked": -0.0007138072142102714
+            },
+            "max_abs_err_C": {
+              "tight": 1.2281667412057438,
+              "native_1e-6": 1.2251241345561823,
+              "tight_minus_native": 0.0030426066495614634,
+              "locked": 1.228109151439675,
+              "tight_minus_locked": 5.758976606884403e-05,
+              "native_minus_locked": -0.0029850168834926194
+            }
+          }
+        },
+        "LG_25degC_Mixed6_10-30-18_23.02_552_Mixed6_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.4368584717072582,
+              "native_1e-6": 0.4375595511537624,
+              "tight_minus_native": -0.0007010794465041603
+            },
+            "mae_C": {
+              "tight": 0.3686410250783167,
+              "native_1e-6": 0.36926464888590227,
+              "tight_minus_native": -0.0006236238075855716
+            },
+            "max_abs_err_C": {
+              "tight": 1.3112253593801206,
+              "native_1e-6": 1.3127456912353566,
+              "tight_minus_native": -0.0015203318552359235
+            }
+          }
+        },
+        "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": true,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.3832994448937915,
+              "native_1e-6": 0.3829193638403016,
+              "tight_minus_native": 0.00038008105348985577,
+              "locked": 0.382905029559964,
+              "tight_minus_locked": 0.000394415333827447,
+              "native_minus_locked": 1.433428033759121e-05
+            },
+            "mae_C": {
+              "tight": 0.31169626118547333,
+              "native_1e-6": 0.3113917643598875,
+              "tight_minus_native": 0.00030449682558580937,
+              "locked": 0.31147284168899136,
+              "tight_minus_locked": 0.00022341949648196913,
+              "native_minus_locked": -8.107732910384025e-05
+            },
+            "max_abs_err_C": {
+              "tight": 1.134482071161674,
+              "native_1e-6": 1.1340488991290627,
+              "tight_minus_native": 0.00043317203261139525,
+              "locked": 1.131102282768584,
+              "tight_minus_locked": 0.003379788393090166,
+              "native_minus_locked": 0.002946616360478771
+            }
+          }
+        },
+        "LG_25degC_Mixed3_10-30-18_06.27_552_Mixed3_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.3841624393757977,
+              "native_1e-6": 0.3837890025967375,
+              "tight_minus_native": 0.00037343677906021
+            },
+            "mae_C": {
+              "tight": 0.3012799645652155,
+              "native_1e-6": 0.30103665967794196,
+              "tight_minus_native": 0.00024330488727353217
+            },
+            "max_abs_err_C": {
+              "tight": 1.3170020027390485,
+              "native_1e-6": 1.315185752087217,
+              "tight_minus_native": 0.0018162506518315524
+            }
+          }
+        },
+        "LG_25degC_Mixed7_10-31-18_04.38_552_Mixed7_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.36027136025816736,
+              "native_1e-6": 0.3599750147377164,
+              "tight_minus_native": 0.00029634552045093576
+            },
+            "mae_C": {
+              "tight": 0.28439827574009574,
+              "native_1e-6": 0.2843803112576005,
+              "tight_minus_native": 1.7964482495247402e-05
+            },
+            "max_abs_err_C": {
+              "tight": 1.0660499860319597,
+              "native_1e-6": 1.0624611343174344,
+              "tight_minus_native": 0.0035888517145252763
+            }
+          }
+        },
+        "LG_25degC_Mixed5_10-30-18_17.36_552_Mixed5_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 0.4005088854140469,
+              "native_1e-6": 0.40034358735991377,
+              "tight_minus_native": 0.00016529805413312282
+            },
+            "mae_C": {
+              "tight": 0.3031416941126787,
+              "native_1e-6": 0.3032695956081932,
+              "tight_minus_native": -0.00012790149551450414
+            },
+            "max_abs_err_C": {
+              "tight": 1.2764841533949784,
+              "native_1e-6": 1.2734641220312994,
+              "tight_minus_native": 0.00302003136367901
+            }
+          }
+        },
+        "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet": {
+          "T_inf_C": 23.15018338317852,
+          "in_step6": false,
+          "metrics": {
+            "rmse_C": {
+              "tight": 1.0449760174740779,
+              "native_1e-6": 1.045303148331135,
+              "tight_minus_native": -0.0003271308570571563
+            },
+            "mae_C": {
+              "tight": 0.9521735218749917,
+              "native_1e-6": 0.9522779768091498,
+              "tight_minus_native": -0.0001044549341581158
+            },
+            "max_abs_err_C": {
+              "tight": 1.8044661176883068,
+              "native_1e-6": 1.8050238061479753,
+              "tight_minus_native": -0.0005576884596685261
+            }
+          }
+        },
+        "LG_0degC_US06_11-30-18_19.02_589_US06_0degC_LGHG2.parquet": {
+          "T_inf_C": -0.6583156517174993,
+          "in_step6": true,
+          "metrics": {
+            "rmse_C": {
+              "tight": 3.612192682804878,
+              "native_1e-6": 3.611623889403235,
+              "tight_minus_native": 0.000568793401642953,
+              "locked": 3.6115057262990686,
+              "tight_minus_locked": 0.0006869565058091887,
+              "native_minus_locked": 0.00011816310416623566
+            },
+            "mae_C": {
+              "tight": 3.390662930168925,
+              "native_1e-6": 3.390129630489888,
+              "tight_minus_native": 0.0005332996790370359,
+              "locked": 3.38984674923468,
+              "tight_minus_locked": 0.0008161809342448478,
+              "native_minus_locked": 0.00028288125520781193
+            },
+            "max_abs_err_C": {
+              "tight": 5.810009754312574,
+              "native_1e-6": 5.808738181052902,
+              "tight_minus_native": 0.0012715732596717544,
+              "locked": 5.8095015862391595,
+              "tight_minus_locked": 0.0005081680734146943,
+              "native_minus_locked": -0.0007634051862570601
+            }
+          }
+        }
+      },
+      "rounding_only": {
+        "LG_25degC_LA92_10-29-18_03.53_551_LA92_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0006254698663532565,
+            "rms_K": 0.00042405862306989114
+          },
+          "T_surf": {
+            "max_abs_K": 0.0006556295554922542,
+            "rms_K": 0.00042799091244251147
+          }
+        },
+        "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0017254898971117427,
+            "rms_K": 0.0007519838665212481
+          },
+          "T_surf": {
+            "max_abs_K": 0.0018698223171256245,
+            "rms_K": 0.000765702099895296
+          }
+        },
+        "LG_25degC_Mixed2_10-29-18_20.16_551_Mixed2_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0014751785675315432,
+            "rms_K": 0.000638747334410722
+          },
+          "T_surf": {
+            "max_abs_K": 0.0016866443617438165,
+            "rms_K": 0.0006614921505900834
+          }
+        },
+        "LG_25degC_Mixed3_10-30-18_06.27_552_Mixed3_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0016253851551866205,
+            "rms_K": 0.000772656717845891
+          },
+          "T_surf": {
+            "max_abs_K": 0.0017530959396800938,
+            "rms_K": 0.0007850218927038171
+          }
+        },
+        "LG_25degC_Mixed4_10-30-18_11.56_552_Mixed4_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.001415397815240027,
+            "rms_K": 0.0006744556429202959
+          },
+          "T_surf": {
+            "max_abs_K": 0.0015577729572839871,
+            "rms_K": 0.00068926237081056
+          }
+        },
+        "LG_25degC_Mixed5_10-30-18_17.36_552_Mixed5_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0019508325117598702,
+            "rms_K": 0.0007988253667246072
+          },
+          "T_surf": {
+            "max_abs_K": 0.002120273059450284,
+            "rms_K": 0.0008197498700477548
+          }
+        },
+        "LG_25degC_Mixed6_10-30-18_23.02_552_Mixed6_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0015867204744779428,
+            "rms_K": 0.0006557125163069954
+          },
+          "T_surf": {
+            "max_abs_K": 0.0017119342559510642,
+            "rms_K": 0.0006693860033002181
+          }
+        },
+        "LG_25degC_Mixed7_10-31-18_04.38_552_Mixed7_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0013009004262158896,
+            "rms_K": 0.0006504473837756266
+          },
+          "T_surf": {
+            "max_abs_K": 0.0014401934743979439,
+            "rms_K": 0.000663052599529313
+          }
+        },
+        "LG_25degC_Mixed8_10-31-18_10.05_552_Mixed8_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0013853880888596848,
+            "rms_K": 0.0005616836649491312
+          },
+          "T_surf": {
+            "max_abs_K": 0.001489001517693822,
+            "rms_K": 0.0005739071504270083
+          }
+        },
+        "LG_25degC_UDDS_10-28-18_17.44_551_UDDS_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.0002641737716970738,
+            "rms_K": 9.057490608522838e-05
+          },
+          "T_surf": {
+            "max_abs_K": 0.00032657973799388174,
+            "rms_K": 9.681447816717465e-05
+          }
+        },
+        "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet": {
+          "T_core": {
+            "max_abs_K": 0.002730671905787574,
+            "rms_K": 0.0018754339321369715
+          },
+          "T_surf": {
+            "max_abs_K": 0.0029227606680635176,
+            "rms_K": 0.0019033654234619872
+          }
+        }
+      },
+      "maxima": {
+        "step6_tight_minus_locked": {
+          "value_C": 0.003379788393090166,
+          "cycle": "LG_25degC_Mixed1_10-29-18_14.41_551_Mixed1_25degC_LGHG2.parquet",
+          "metric": "max_abs_err_C"
+        },
+        "all_cycles_tight_minus_native": {
+          "value_C": 0.0035888517145252763,
+          "cycle": "LG_25degC_Mixed7_10-31-18_04.38_552_Mixed7_25degC_LGHG2.parquet",
+          "metric": "max_abs_err_C"
+        },
+        "rounding_only_max_abs": {
+          "value_K": 0.0029227606680635176,
+          "cycle": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+          "channel": "T_surf"
+        },
+        "rounding_only_rms": {
+          "value_K": 0.0019033654234619872,
+          "cycle": "LG_25degC_US06_10-29-18_10.08_551_US06_25degC_LGHG2.parquet",
+          "channel": "T_surf"
+        }
+      },
+      "acceptance": [
+        {
+          "section": "\u00a77.6",
+          "printed": "0.0034",
+          "regenerated": 0.003379788393090166,
+          "regenerated_at_printed_precision": 0.003379788393090166,
+          "precision": "<=",
+          "match": true,
+          "source": "max |metric(tight) - locked Step 6 value| over 5 Step-6 cycles x (RMSE, MAE, max-abs)",
+          "qualifier": "bound: '<= 3.4e-3 \u00b0C on any validation metric'"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "0.383299",
+          "regenerated": 0.3832994448937915,
+          "regenerated_at_printed_precision": 0.383299,
+          "precision": "dp6",
+          "match": true,
+          "source": "Mixed1 surface RMSE, tight"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "0.382905",
+          "regenerated": 0.3829193638403016,
+          "regenerated_at_printed_precision": 0.382919,
+          "precision": "dp6",
+          "match": false,
+          "source": "Mixed1 surface RMSE regenerated at rtol=1e-6 in this environment",
+          "note": "locked value; tests portability of the rtol=1e-6 result (\u00a77.6 item 5)"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "2e-3",
+          "regenerated": 0.0018754339321369715,
+          "regenerated_at_printed_precision": 0.002,
+          "precision": "sf1",
+          "match": true,
+          "source": "US06 T_core, rms |locked constants - label constants|, both tight",
+          "qualifier": "about"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "23.15",
+          "regenerated": 23.15,
+          "regenerated_at_printed_precision": "23.15",
+          "precision": "eq",
+          "match": true,
+          "source": "generate_labels.T_INF_25C_C"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "5.21",
+          "regenerated": 5.21,
+          "regenerated_at_printed_precision": "5.21",
+          "precision": "eq",
+          "match": true,
+          "source": "generate_labels.R_SA_K_PER_W"
+        },
+        {
+          "section": "\u00a77.6",
+          "printed": "(1e-06, 1e-08, 5.0)",
+          "regenerated": "(1e-06, 1e-08, 5.0)",
+          "regenerated_at_printed_precision": "(1e-06, 1e-08, 5.0)",
+          "precision": "eq",
+          "match": true,
+          "source": "solver arguments evaluate_on_cycle actually passed (C2 log)"
+        }
+      ]
+    }
+  }
+}

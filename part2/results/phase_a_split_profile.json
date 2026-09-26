@@ -1,0 +1,661 @@
+{
+  "analysis": "phase_a_split_profile",
+  "status": "ok",
+  "provenance": {
+    "git_head": "aa119effbaa13432c282083c0eea8fb1b20c1e70",
+    "dirty": false,
+    "tracked_changes": [],
+    "untracked_files": [
+      "part2/results/phase_a_derived.json",
+      "part2/results/phase_a_jacobian_diagnostic.json"
+    ],
+    "md5": {
+      "data/calibration/calibration_results.json": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+      "part2/identifiability.py": "70276d29c8da645cd16e159c7f1de4f9",
+      "calibrate.py": "d08bbf44c1a693c4cb5694923658e62e",
+      "generate_labels.py": "c3b45e3595ee0eb9f1aa8d24e2f96958",
+      "thermal_model.py": "8bf725cef7af81431e1d4330eb549389"
+    },
+    "locked_calibration_md5_expected": "611c8d1dfb0ad4d90a62f4ffb87ac437",
+    "python": "3.12.4",
+    "numpy": "1.26.4",
+    "scipy": "1.13.1",
+    "pandas": "2.2.2",
+    "matplotlib": "3.8.4",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "executable": "C:\\Users\\Avinash Nayal\\anaconda3\\python.exe",
+    "argv": [
+      "--split-profile",
+      "--workers",
+      "14"
+    ],
+    "started_utc": "2026-09-26T03:52:36+00:00",
+    "stage": null,
+    "workers": 14,
+    "elapsed_s": 362.32014441490173,
+    "tolerance_sets": {
+      "tight": {
+        "rtol": 1e-10,
+        "atol": 1e-12,
+        "max_step": 5.0
+      },
+      "loose_part1_residual": {
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "max_step": 20.0
+      },
+      "label_and_step6": {
+        "rtol": 1e-06,
+        "atol": 1e-08,
+        "max_step": 5.0
+      }
+    }
+  },
+  "patch_verification": {
+    "assertions": [
+      "one tolerance cell per process pool; pools refuse other cells' tasks",
+      "workers refuse tasks for any cell other than their own",
+      "no worker process served more than one cell",
+      "every simulate_T call matched its group's declared (rtol, atol, max_step)"
+    ],
+    "all_groups_match_declared": true,
+    "workers_serving_more_than_one_cell": 0,
+    "tight_and_loose_shared_a_pool": false,
+    "worker_processes_by_cell": {
+      "loose_native": 7,
+      "tight": 17
+    },
+    "pools": [
+      {
+        "pool": 1,
+        "cell": "loose_native",
+        "max_workers": 4
+      },
+      {
+        "pool": 2,
+        "cell": "loose_native",
+        "max_workers": 3
+      },
+      {
+        "pool": 3,
+        "cell": "tight",
+        "max_workers": 14
+      },
+      {
+        "pool": 4,
+        "cell": "tight",
+        "max_workers": 3
+      }
+    ],
+    "groups": [
+      {
+        "group": "determinism gate, pool A: Part 1 split-only residual at the locked central split",
+        "cell": "loose_native",
+        "wrapper_mode": "pass-through",
+        "declared": {
+          "rtol": 0.001,
+          "atol": 1e-05,
+          "max_step": 20.0
+        },
+        "observed": [
+          {
+            "rtol": 0.001,
+            "atol": 1e-05,
+            "max_step": 20.0,
+            "calls": 3
+          }
+        ],
+        "tasks": 3,
+        "simulate_T_calls": 3,
+        "worker_processes": 3,
+        "pids": [
+          41096,
+          73136,
+          78528
+        ],
+        "all_calls_match_declared": true
+      },
+      {
+        "group": "determinism gate, pool B: Part 1 split-only residual at the locked central split",
+        "cell": "loose_native",
+        "wrapper_mode": "pass-through",
+        "declared": {
+          "rtol": 0.001,
+          "atol": 1e-05,
+          "max_step": 20.0
+        },
+        "observed": [
+          {
+            "rtol": 0.001,
+            "atol": 1e-05,
+            "max_step": 20.0,
+            "calls": 3
+          }
+        ],
+        "tasks": 3,
+        "simulate_T_calls": 3,
+        "worker_processes": 3,
+        "pids": [
+          61608,
+          73180,
+          78468
+        ],
+        "all_calls_match_declared": true
+      },
+      {
+        "group": "nine-point split profile",
+        "cell": "loose_native",
+        "wrapper_mode": "pass-through",
+        "declared": {
+          "rtol": 0.001,
+          "atol": 1e-05,
+          "max_step": 20.0
+        },
+        "observed": [
+          {
+            "rtol": 0.001,
+            "atol": 1e-05,
+            "max_step": 20.0,
+            "calls": 27
+          }
+        ],
+        "tasks": 27,
+        "simulate_T_calls": 27,
+        "worker_processes": 4,
+        "pids": [
+          41096,
+          68192,
+          73136,
+          78528
+        ],
+        "all_calls_match_declared": true
+      },
+      {
+        "group": "determinism gate, pool A: Part 1 split-only residual at the locked central split",
+        "cell": "tight",
+        "wrapper_mode": "override",
+        "declared": {
+          "rtol": 1e-10,
+          "atol": 1e-12,
+          "max_step": 5.0
+        },
+        "observed": [
+          {
+            "rtol": 1e-10,
+            "atol": 1e-12,
+            "max_step": 5.0,
+            "calls": 3
+          }
+        ],
+        "tasks": 3,
+        "simulate_T_calls": 3,
+        "worker_processes": 3,
+        "pids": [
+          58228,
+          72408,
+          76720
+        ],
+        "all_calls_match_declared": true
+      },
+      {
+        "group": "determinism gate, pool B: Part 1 split-only residual at the locked central split",
+        "cell": "tight",
+        "wrapper_mode": "override",
+        "declared": {
+          "rtol": 1e-10,
+          "atol": 1e-12,
+          "max_step": 5.0
+        },
+        "observed": [
+          {
+            "rtol": 1e-10,
+            "atol": 1e-12,
+            "max_step": 5.0,
+            "calls": 3
+          }
+        ],
+        "tasks": 3,
+        "simulate_T_calls": 3,
+        "worker_processes": 3,
+        "pids": [
+          42208,
+          72388,
+          188036
+        ],
+        "all_calls_match_declared": true
+      },
+      {
+        "group": "nine-point split profile",
+        "cell": "tight",
+        "wrapper_mode": "override",
+        "declared": {
+          "rtol": 1e-10,
+          "atol": 1e-12,
+          "max_step": 5.0
+        },
+        "observed": [
+          {
+            "rtol": 1e-10,
+            "atol": 1e-12,
+            "max_step": 5.0,
+            "calls": 27
+          }
+        ],
+        "tasks": 27,
+        "simulate_T_calls": 27,
+        "worker_processes": 14,
+        "pids": [
+          58228,
+          61976,
+          62184,
+          64004,
+          67740,
+          72408,
+          75692,
+          76720,
+          81224,
+          82308,
+          82324,
+          83060,
+          83380,
+          85328
+        ],
+        "all_calls_match_declared": true
+      }
+    ]
+  },
+  "description": "calibrate._residuals_split_only at the central R_cs, three calibration cycles, stride 10; cost = 0.5 * sum(residual^2).",
+  "R_cs": 3.394393848502332,
+  "locked_split": 0.9282698890836659,
+  "splits": [
+    0.8,
+    0.85,
+    0.9,
+    0.9282698890836659,
+    0.93,
+    0.95,
+    0.97,
+    0.98,
+    0.99
+  ],
+  "gates": [
+    {
+      "name": "Part 1 split-only residual at the locked central split",
+      "cell": "loose_native",
+      "tasks_per_side": 3,
+      "values_compared": 3008,
+      "pids_a": [
+        41096,
+        73136,
+        78528
+      ],
+      "pids_b": [
+        61608,
+        73180,
+        78468
+      ],
+      "different_processes": true,
+      "bitwise_identical": true,
+      "max_abs_diff": 0.0,
+      "passed": true
+    },
+    {
+      "name": "Part 1 split-only residual at the locked central split",
+      "cell": "tight",
+      "tasks_per_side": 3,
+      "values_compared": 3008,
+      "pids_a": [
+        58228,
+        72408,
+        76720
+      ],
+      "pids_b": [
+        42208,
+        72388,
+        188036
+      ],
+      "different_processes": true,
+      "bitwise_identical": true,
+      "max_abs_diff": 0.0,
+      "passed": true
+    }
+  ],
+  "profile": {
+    "loose_native": {
+      "0.8": {
+        "cost": 529.7736770550543,
+        "rmse_C": 0.5935007467053405
+      },
+      "0.85": {
+        "cost": 524.1647325034387,
+        "rmse_C": 0.5903505610306483
+      },
+      "0.9": {
+        "cost": 536.6900932915039,
+        "rmse_C": 0.5973623836065294
+      },
+      "0.9282698890836659": {
+        "cost": 460.3521695618151,
+        "rmse_C": 0.5532496896732498
+      },
+      "0.93": {
+        "cost": 455.1641222938942,
+        "rmse_C": 0.5501233676279367
+      },
+      "0.95": {
+        "cost": 482.22672388640586,
+        "rmse_C": 0.5662415303288455
+      },
+      "0.97": {
+        "cost": 464.94964780580284,
+        "rmse_C": 0.5560054433747649
+      },
+      "0.98": {
+        "cost": 462.05627920496045,
+        "rmse_C": 0.5542727403977026
+      },
+      "0.99": {
+        "cost": 466.46591096886823,
+        "rmse_C": 0.5569113096007439
+      }
+    },
+    "tight": {
+      "0.8": {
+        "cost": 477.16451915863115,
+        "rmse_C": 0.5632616115603837
+      },
+      "0.85": {
+        "cost": 474.39331751977574,
+        "rmse_C": 0.5616236184282555
+      },
+      "0.9": {
+        "cost": 471.84666383585636,
+        "rmse_C": 0.5601141267610066
+      },
+      "0.9282698890836659": {
+        "cost": 470.536875255086,
+        "rmse_C": 0.5593361823896639
+      },
+      "0.93": {
+        "cost": 470.46052893499916,
+        "rmse_C": 0.5592908033834765
+      },
+      "0.95": {
+        "cost": 469.6072753215703,
+        "rmse_C": 0.5587833926201327
+      },
+      "0.97": {
+        "cost": 468.8054583638353,
+        "rmse_C": 0.5583061497877737
+      },
+      "0.98": {
+        "cost": 468.4024697165736,
+        "rmse_C": 0.5580661361447687
+      },
+      "0.99": {
+        "cost": 467.94568336673933,
+        "rmse_C": 0.5577939565674805
+      }
+    }
+  },
+  "summary": {
+    "tight_monotone_non_increasing": true,
+    "loose_monotone_non_increasing": false,
+    "tight_argmin": 0.99,
+    "loose_argmin": 0.93,
+    "tight_range": 9.21883579189182,
+    "loose_range": 81.5259709976097,
+    "loose_over_tight": 8.8434128601481
+  },
+  "crosscheck": {
+    "tight_cost_at_0.99": 467.94568336673933,
+    "phase_a_split_refit_fits_central_cost": 467.9455299628735,
+    "phase_a_split_refit_fits_central_split": 0.9899999999999995
+  },
+  "acceptance": [
+    {
+      "section": "\u00a77.5",
+      "printed": "477.165",
+      "regenerated": 477.16451915863115,
+      "regenerated_at_printed_precision": 477.165,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.8"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "529.774",
+      "regenerated": 529.7736770550543,
+      "regenerated_at_printed_precision": 529.774,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.8"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "474.393",
+      "regenerated": 474.39331751977574,
+      "regenerated_at_printed_precision": 474.393,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.85"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "524.165",
+      "regenerated": 524.1647325034387,
+      "regenerated_at_printed_precision": 524.165,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.85"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "471.847",
+      "regenerated": 471.84666383585636,
+      "regenerated_at_printed_precision": 471.847,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.9"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "536.690",
+      "regenerated": 536.6900932915039,
+      "regenerated_at_printed_precision": 536.69,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.9"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "470.537",
+      "regenerated": 470.536875255086,
+      "regenerated_at_printed_precision": 470.537,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.9282698890836659"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "460.352",
+      "regenerated": 460.3521695618151,
+      "regenerated_at_printed_precision": 460.352,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.9282698890836659"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "470.461",
+      "regenerated": 470.46052893499916,
+      "regenerated_at_printed_precision": 470.461,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.93"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "455.164",
+      "regenerated": 455.1641222938942,
+      "regenerated_at_printed_precision": 455.164,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.93"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "469.607",
+      "regenerated": 469.6072753215703,
+      "regenerated_at_printed_precision": 469.607,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.95"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "482.227",
+      "regenerated": 482.22672388640586,
+      "regenerated_at_printed_precision": 482.227,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.95"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "468.805",
+      "regenerated": 468.8054583638353,
+      "regenerated_at_printed_precision": 468.805,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.97"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "464.950",
+      "regenerated": 464.94964780580284,
+      "regenerated_at_printed_precision": 464.95,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.97"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "468.402",
+      "regenerated": 468.4024697165736,
+      "regenerated_at_printed_precision": 468.402,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.98"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "462.056",
+      "regenerated": 462.05627920496045,
+      "regenerated_at_printed_precision": 462.056,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.98"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "467.946",
+      "regenerated": 467.94568336673933,
+      "regenerated_at_printed_precision": 467.946,
+      "precision": "dp3",
+      "match": true,
+      "source": "tight cost at split 0.99"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "466.466",
+      "regenerated": 466.46591096886823,
+      "regenerated_at_printed_precision": 466.466,
+      "precision": "dp3",
+      "match": true,
+      "source": "loose cost at split 0.99"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "9.22",
+      "regenerated": 9.21883579189182,
+      "regenerated_at_printed_precision": 9.22,
+      "precision": "dp2",
+      "match": true,
+      "source": "tight cost range over the grid"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "1.97",
+      "regenerated": 1.9700653557833583,
+      "regenerated_at_printed_precision": 1.97,
+      "precision": "dp2",
+      "match": true,
+      "source": "tight range, % of minimum"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "81.53",
+      "regenerated": 81.5259709976097,
+      "regenerated_at_printed_precision": 81.53,
+      "precision": "dp2",
+      "match": true,
+      "source": "loose cost range over the grid"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "17.9",
+      "regenerated": 17.911335055747063,
+      "regenerated_at_printed_precision": 17.9,
+      "precision": "dp1",
+      "match": true,
+      "source": "loose range, % of minimum"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "9",
+      "regenerated": 8.8434128601481,
+      "regenerated_at_printed_precision": 9.0,
+      "precision": "dp0",
+      "match": true,
+      "source": "loose range / tight range",
+      "qualifier": "roughly nine times"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "True",
+      "regenerated": true,
+      "regenerated_at_printed_precision": "True",
+      "precision": "eq",
+      "match": true,
+      "source": "tight cost non-increasing in split"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "False",
+      "regenerated": false,
+      "regenerated_at_printed_precision": "False",
+      "precision": "eq",
+      "match": true,
+      "source": "loose cost non-increasing in split"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "0.93",
+      "regenerated": 0.93,
+      "regenerated_at_printed_precision": 0.93,
+      "precision": "dp2",
+      "match": true,
+      "source": "loose argmin (= p0)"
+    },
+    {
+      "section": "\u00a77.5",
+      "printed": "0.99",
+      "regenerated": 0.99,
+      "regenerated_at_printed_precision": 0.99,
+      "precision": "dp2",
+      "match": true,
+      "source": "tight argmin (= bound)"
+    }
+  ]
+}
