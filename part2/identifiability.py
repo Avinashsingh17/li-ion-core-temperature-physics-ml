@@ -29,17 +29,41 @@ Usage
 -----
     python part2/identifiability.py                 # US06 @ 25 degC (default)
     python part2/identifiability.py --file-id LA92
+    python part2/identifiability.py --noise-diagnostic
+
+Reproducibility subcommands for the §7 figures that Phase A reported from
+console output only (each writes a NEW JSON; see the section header below):
+
+    python part2/identifiability.py --derived
+    python part2/identifiability.py --jacobian-diagnostic --stage jacobian
+    python part2/identifiability.py --jacobian-diagnostic --stage factorial
+    python part2/identifiability.py --jacobian-diagnostic --stage refit
+    python part2/identifiability.py --jacobian-diagnostic --stage refit-jacobian
+    python part2/identifiability.py --split-profile
+    python part2/identifiability.py --tolerance-bounds --stage labels
+    python part2/identifiability.py --tolerance-bounds --stage metrics
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime
+import hashlib
+import inspect
 import json
+import math
 import os
+import platform
 import re
+import subprocess
 import sys
+import time
+import uuid
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -1206,6 +1230,1288 @@ def run_noise_diagnostic(h: float = H_DEFAULT,
 
 
 # ===========================================================================
+# Reproducibility subcommands (Part 2, item 2)
+#
+# Every §7 number that Phase A reported from console output only is
+# regenerated here and written to a NEW JSON in part2/results/. The three
+# Phase A JSONs are cited by key path in committed knowledge-base text, so they
+# are on a deny-list and are never written by this code.
+#
+# Fidelity: Part 1's own functions are called, not reimplemented -
+# calibrate._residuals_split_Rcs, _residuals_split_only, _jacobian_ci and
+# evaluate_on_cycle, the Step-3 least_squares settings (checked against the
+# calibrate.py source), and generate_labels.label_one_cycle / load_band_splits.
+# Solver settings are changed only by wrapping the module-global `simulate_T`
+# inside worker processes; calibrate.py and generate_labels.py are never
+# modified. The wrapper records every (rtol, atol, max_step) it actually passes
+# and the parent checks each evaluation group against its declared cell.
+#
+# Isolation: one tolerance cell per process pool. A task carries its cell, and
+# both the pool and the worker refuse a task for any other cell.
+#
+# Gates: before anything else in a stage, the same evaluation runs in two
+# different pools (so in different processes) and must agree bitwise. Every
+# tight finite-difference Jacobian used for a conclusion must be step-invariant.
+#
+# Acceptance: each regenerated value is compared with the number printed in
+# §7, at the precision it is printed. A mismatch is recorded as a finding;
+# §7 is never edited to match.
+# ===========================================================================
+
+REPRO_TIGHT = {"rtol": 1e-10, "atol": 1e-12, "max_step": 5.0}
+REPRO_LOOSE = {"rtol": 1e-3, "atol": 1e-5, "max_step": 20.0}   # Part 1 fit residuals
+REPRO_LABEL = {"rtol": 1e-6, "atol": 1e-8, "max_step": 5.0}    # labels, Step 5/6 traces
+FACTORIAL_CELLS = {
+    "rtol1e-3_ms20": {"rtol": 1e-3, "atol": 1e-5, "max_step": 20.0},
+    "rtol1e-3_ms5": {"rtol": 1e-3, "atol": 1e-5, "max_step": 5.0},
+    "rtol1e-10_ms20": {"rtol": 1e-10, "atol": 1e-12, "max_step": 20.0},
+    "rtol1e-10_ms5": dict(REPRO_TIGHT),
+}
+FACTORIAL_REFERENCE = "rtol1e-10_ms5"
+FACTORIAL_RELS = (0.02, 0.005)
+FACTORIAL_CLEAN = 0.01          # noise/signal at or below this = signal-dominated FD
+REPRO_RELS = (0.02, 0.005, 0.001)
+STEP_INVARIANCE_RTOL = 1e-3
+LOCKED_CAL_MD5 = "611c8d1dfb0ad4d90a62f4ffb87ac437"
+PROTECTED_RESULTS = frozenset({
+    "phase_a_identifiability.json",
+    "phase_a_noise_diagnostic.json",
+    "phase_a_split_refit_diagnostic.json",
+})
+JAC_JSON = "phase_a_jacobian_diagnostic.json"
+PROFILE_JSON = "phase_a_split_profile.json"
+TOLB_JSON = "phase_a_tolerance_bounds.json"
+DERIVED_JSON = "phase_a_derived.json"
+JAC_STAGES = ("jacobian", "factorial", "refit", "refit-jacobian")
+TOLB_STAGES = ("labels", "metrics")
+LABELED_DIR = PROJECT_ROOT / "data" / "labeled"
+LABEL_COLS = ("T_core_model_C", "T_core_model_lo_C", "T_core_model_hi_C", "T_surf_model_C")
+PROFILE_SPLITS = (0.80, 0.85, 0.90, "locked", 0.93, 0.95, 0.97, 0.98, 0.99)
+PARAMS2 = ("split", "R_cs")
+
+# calibrate.step3_diagnostic_fit's least_squares settings. They are asserted
+# against the calibrate.py source at run time, so a change there aborts rather
+# than silently diverging.
+STEP3_SETTINGS = {"p0": [0.93, 1.5], "lb": [0.50, 0.1], "ub": [0.99, 30.0],
+                  "method": "trf", "max_nfev": 200, "ftol": 1e-10, "xtol": 1e-10,
+                  "gtol": 1e-10, "diff_step": 0.02, "stride": 10}
+STEP3_SOURCE_NEEDLES = ("stride = 10", "p0 = np.array([0.93, 1.5])",
+                        "bounds = ([0.50, 0.1], [0.99, 30.0])", 'method="trf"',
+                        "max_nfev=200", 'x_scale="jac"',
+                        "ftol=1e-10, xtol=1e-10, gtol=1e-10", "diff_step=0.02")
+RESIDUAL_SOURCE_NEEDLE = "max_step=20, rtol=1e-3, atol=1e-5"
+
+# The genuine solver entry point, captured at import time (before any wrapper).
+_ORIG_SIMULATE_T = cal.simulate_T
+
+
+def _cell(name, override, expect):
+    return {"name": name,
+            "override": None if override is None else dict(override),
+            "expect": dict(expect)}
+
+
+CELL_TIGHT = _cell("tight", REPRO_TIGHT, REPRO_TIGHT)
+CELL_LOOSE_NATIVE = _cell("loose_native", None, REPRO_LOOSE)
+CELL_LABEL_NATIVE = _cell("label_native", None, REPRO_LABEL)
+
+
+def _tol_tuple(d):
+    return (float(d["rtol"]), float(d["atol"]), float(d["max_step"]))
+
+
+# ---------------------------------------------------------------------------
+# Worker side
+# ---------------------------------------------------------------------------
+
+_RP: dict = {}
+
+
+def _rp_init(cell: dict) -> None:
+    """Install the recording (and, for override cells, forcing) wrapper."""
+    global _RP
+    import generate_labels as gl
+    if cal.simulate_T is not _ORIG_SIMULATE_T or gl.simulate_T is not _ORIG_SIMULATE_T:
+        raise RuntimeError("simulate_T is already wrapped in a fresh worker")
+    expect = _tol_tuple(cell["expect"])
+    override = cell["override"]
+    _RP = {"cell": cell, "token": uuid.uuid4().hex, "calls": [], "caches": {}, "gl": gl}
+
+    def wrapped(cache, params, t_eval=None, max_step=10.0, rtol=1e-4, atol=1e-6):
+        kw = {"rtol": rtol, "atol": atol, "max_step": max_step}
+        if override is not None:
+            kw = dict(override)
+        used = _tol_tuple(kw)
+        _RP["calls"].append(used)
+        if used != expect:
+            raise RuntimeError(f"cell {cell['name']}: simulate_T called with "
+                               f"(rtol, atol, max_step) = {used}, expected {expect}")
+        return _ORIG_SIMULATE_T(cache, params, t_eval=t_eval, max_step=kw["max_step"],
+                                rtol=kw["rtol"], atol=kw["atol"])
+
+    # Both residual functions and evaluate_on_cycle resolve `simulate_T` through
+    # calibrate's module globals; generate_labels imported the name directly.
+    cal.simulate_T = wrapped
+    gl.simulate_T = wrapped
+
+
+def _rp_cache(fname: str, t_inf: float) -> dict:
+    key = (fname, float(t_inf))
+    cache = _RP["caches"].get(key)
+    if cache is None:
+        cache = cal.precompute_cycle(PROCESSED_DIR / fname, T_inf_override=float(t_inf))
+        _RP["caches"][key] = cache
+    return cache
+
+
+def _rp_refit(task: dict) -> dict:
+    from scipy.optimize import least_squares
+    s = task["settings"]
+    caches = [_rp_cache(f, task["T_inf"]) for f in task["files"]]
+    res = least_squares(
+        cal._residuals_split_Rcs, np.array(s["p0"], dtype=float),
+        args=(task["C_total"], task["R_sa"], caches, s["stride"]),
+        bounds=(s["lb"], s["ub"]), method=s["method"], max_nfev=s["max_nfev"],
+        verbose=0, x_scale=task["x_scale"], ftol=s["ftol"], xtol=s["xtol"],
+        gtol=s["gtol"], diff_step=s["diff_step"])
+    ci = cal._jacobian_ci(res, n_params=2)
+    return {"x": np.asarray(res.x, float), "fun": np.asarray(res.fun, float),
+            "cost": float(res.cost), "nfev": int(res.nfev),
+            "njev": None if res.njev is None else int(res.njev),
+            "status": int(res.status), "message": str(res.message),
+            "active_mask": [int(v) for v in res.active_mask],
+            "jac_col_norms": np.linalg.norm(res.jac, axis=0),
+            "ci95_abs": np.asarray(ci, float)}
+
+
+def _rp_task(task: dict):
+    cell = _RP["cell"]
+    if task["cell"] != cell["name"]:
+        raise RuntimeError(f"task for cell {task['cell']!r} reached a pool for "
+                           f"cell {cell['name']!r}")
+    _RP["calls"] = []
+    kind = task["kind"]
+    if kind == "resid_rcs":
+        out = cal._residuals_split_Rcs(
+            np.asarray(task["p"], dtype=float), task["C_total"], task["R_sa"],
+            [_rp_cache(task["file"], task["T_inf"])], task["stride"])
+    elif kind == "resid_rcs_reimpl":
+        # Phase A's scratch reimplementation, kept only as a cross-check.
+        c = _rp_cache(task["file"], task["T_inf"])
+        split, r_cs = task["p"]
+        prm = ThermalParams(C_core=split * task["C_total"],
+                            C_surf=(1 - split) * task["C_total"],
+                            R_cs=r_cs, R_sa=task["R_sa"])
+        _, _, ts, _ = cal.simulate_T(c, prm, t_eval=c["t_grid"][::task["stride"]],
+                                     **REPRO_TIGHT)
+        out = ts - c["T_surf_meas"][::task["stride"]]
+    elif kind == "resid_split_only":
+        out = cal._residuals_split_only(
+            np.array([task["split"]], dtype=float), task["C_total"], task["R_sa"],
+            task["R_cs"], [_rp_cache(task["file"], task["T_inf"])], task["stride"])
+    elif kind == "refit":
+        out = _rp_refit(task)
+    elif kind == "label_cycle":
+        df, _row = _RP["gl"].label_one_cycle(PROCESSED_DIR / task["file"], task["splits"])
+        out = {col: df[col].to_numpy(dtype=float) for col in LABEL_COLS}
+    elif kind == "label_central":
+        # The central call inside generate_labels.label_one_cycle, verbatim.
+        gl = _RP["gl"]
+        c = _rp_cache(task["file"], gl.T_INF_25C_C)
+        s = task["splits"]["central"]
+        _, tc, ts, _ = gl.simulate_T(c, gl.make_params(s["R_cs"], s["split"]),
+                                     t_eval=c["t_grid"], max_step=5, rtol=1e-6, atol=1e-8)
+        out = {"T_core": np.asarray(tc, float), "T_surf": np.asarray(ts, float)}
+    elif kind == "evaluate":
+        c = _rp_cache(task["file"], task["T_inf"])
+        ev = cal.evaluate_on_cycle(c, ThermalParams(**task["params"]))
+        out = {"T_core": np.asarray(ev["T_core"], float),
+               "T_surf": np.asarray(ev["T_surf"], float),
+               "rmse_C": float(ev["rmse_C"]), "mae_C": float(ev["mae_C"]),
+               "max_abs_err_C": float(ev["max_abs_err_C"])}
+    else:
+        raise RuntimeError(f"unknown task kind {kind!r}")
+    calls = Counter(_RP["calls"])
+    log = {"token": _RP["token"], "pid": os.getpid(), "cell": cell["name"],
+           "calls": [[list(k), int(v)] for k, v in calls.items()]}
+    return out, log
+
+
+# ---------------------------------------------------------------------------
+# Parent side: pools, patch log, gates
+# ---------------------------------------------------------------------------
+
+class _PatchLog:
+    """C2: what each evaluation group actually passed to the solver."""
+
+    def __init__(self):
+        self.groups, self.pools, self.token_cell = [], [], {}
+
+    def record(self, group, cell, logs):
+        declared = _tol_tuple(cell["expect"])
+        observed, tokens, pids, n_calls = Counter(), set(), set(), 0
+        for lg in logs:
+            prev = self.token_cell.setdefault(lg["token"], cell["name"])
+            if prev != cell["name"]:
+                raise SpecMismatch(f"worker {lg['token'][:8]} served cells "
+                                   f"{prev!r} and {cell['name']!r}")
+            tokens.add(lg["token"])
+            pids.add(lg["pid"])
+            for combo, cnt in lg["calls"]:
+                observed[tuple(combo)] += cnt
+                n_calls += cnt
+        ok = n_calls > 0 and set(observed) == {declared}
+        self.groups.append({
+            "group": group, "cell": cell["name"],
+            "wrapper_mode": "override" if cell["override"] is not None else "pass-through",
+            "declared": dict(zip(("rtol", "atol", "max_step"), declared)),
+            "observed": [{"rtol": k[0], "atol": k[1], "max_step": k[2], "calls": v}
+                         for k, v in observed.items()],
+            "tasks": len(logs), "simulate_T_calls": n_calls,
+            "worker_processes": len(tokens), "pids": sorted(pids),
+            "all_calls_match_declared": ok})
+        if not ok:
+            raise SpecMismatch(f"patch verification failed for {group!r}: observed "
+                               f"{dict(observed)}, declared {declared}")
+
+    def observed(self, cell_name):
+        return sorted({(o["rtol"], o["atol"], o["max_step"])
+                       for g in self.groups if g["cell"] == cell_name for o in g["observed"]})
+
+    def summary(self):
+        by_cell = Counter(self.token_cell.values())
+        return {
+            "assertions": [
+                "one tolerance cell per process pool; pools refuse other cells' tasks",
+                "workers refuse tasks for any cell other than their own",
+                "no worker process served more than one cell",
+                "every simulate_T call matched its group's declared (rtol, atol, max_step)",
+            ],
+            # None, not a vacuous True, when the command ran no ODE at all.
+            "all_groups_match_declared": (all(g["all_calls_match_declared"] for g in self.groups)
+                                          if self.groups else None),
+            "workers_serving_more_than_one_cell": 0,
+            "tight_and_loose_shared_a_pool": False,
+            "worker_processes_by_cell": dict(by_cell),
+            "pools": self.pools,
+            "groups": self.groups,
+        }
+
+
+class _CellPool:
+    _next_id = 0
+
+    def __init__(self, cell, workers, book):
+        _CellPool._next_id += 1
+        self.id, self.cell, self.book = _CellPool._next_id, cell, book
+        self.ex = ProcessPoolExecutor(max_workers=workers, initializer=_rp_init,
+                                      initargs=(cell,))
+        book.pools.append({"pool": self.id, "cell": cell["name"], "max_workers": workers})
+
+    def submit(self, tasks):
+        for t in tasks:
+            if t["cell"] != self.cell["name"]:
+                raise SpecMismatch(f"pool {self.id} ({self.cell['name']}) refused a task "
+                                   f"for cell {t['cell']!r}")
+        return [self.ex.submit(_rp_task, t) for t in tasks]
+
+    def collect(self, futs, group):
+        pairs = [f.result() for f in futs]
+        logs = [lg for _, lg in pairs]
+        self.book.record(group, self.cell, logs)
+        return [r for r, _ in pairs], logs
+
+    def run(self, tasks, group):
+        return self.collect(self.submit(tasks), group)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.ex.shutdown(wait=True, cancel_futures=True)
+        return False
+
+
+def _bitwise(a, b):
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    if a.shape != b.shape:
+        return False, float("inf")
+    return bool(np.array_equal(a, b)), (float(np.max(np.abs(a - b))) if a.size else 0.0)
+
+
+def _gate(pool_a, pool_b, tasks, name, as_array):
+    """Identical tasks in two different pools; require bitwise equality."""
+    ta = [dict(t, cell=pool_a.cell["name"]) for t in tasks]
+    tb = [dict(t, cell=pool_b.cell["name"]) for t in tasks]
+    fa, fb = pool_a.submit(ta), pool_b.submit(tb)
+    ra, la = pool_a.collect(fa, f"determinism gate, pool A: {name}")
+    rb, lb = pool_b.collect(fb, f"determinism gate, pool B: {name}")
+    va, vb = as_array(ra), as_array(rb)
+    same, max_diff = _bitwise(va, vb)
+    tok_a, tok_b = {x["token"] for x in la}, {x["token"] for x in lb}
+    rec = {"name": name, "cell": pool_a.cell["name"], "tasks_per_side": len(tasks),
+           "values_compared": int(np.asarray(va).size),
+           "pids_a": sorted({x["pid"] for x in la}), "pids_b": sorted({x["pid"] for x in lb}),
+           "different_processes": tok_a.isdisjoint(tok_b),
+           "bitwise_identical": same, "max_abs_diff": max_diff}
+    rec["passed"] = bool(rec["different_processes"] and same)
+    print(f"    gate [{pool_a.cell['name']}] {name}: bitwise={same}, "
+          f"max|d|={max_diff:.3e}, pids A={rec['pids_a']} B={rec['pids_b']} -> "
+          f"{'PASS' if rec['passed'] else 'FAIL'}", flush=True)
+    if not rec["passed"]:
+        raise SpecMismatch(f"determinism gate failed: {name}")
+    return rec, ra
+
+
+# ---------------------------------------------------------------------------
+# Provenance, JSON output, acceptance
+# ---------------------------------------------------------------------------
+
+def _md5(path) -> str:
+    return hashlib.md5(Path(path).read_bytes()).hexdigest()
+
+
+def _git(*args) -> str:
+    return subprocess.run(["git", *args], cwd=PROJECT_ROOT, capture_output=True,
+                          text=True, check=True).stdout
+
+
+def _provenance(allow_dirty: bool) -> dict:
+    import pandas
+    import scipy
+    head = _git("rev-parse", "HEAD").strip()
+    tracked = [ln for ln in _git("status", "--porcelain", "--untracked-files=no").splitlines()
+               if ln.strip()]
+    untracked = [ln[3:] for ln in _git("status", "--porcelain", "--untracked-files=all").splitlines()
+                 if ln.startswith("??")]
+    cal_md5 = _md5(CAL_JSON)
+    if cal_md5 != LOCKED_CAL_MD5:
+        raise SpecMismatch(f"locked calibration JSON md5 is {cal_md5}, expected {LOCKED_CAL_MD5}")
+    if tracked and not allow_dirty:
+        raise SpecMismatch("tracked files have uncommitted changes (commit first, or pass "
+                           "--allow-dirty):\n  " + "\n  ".join(tracked))
+    return {
+        "git_head": head, "dirty": bool(tracked), "tracked_changes": tracked,
+        "untracked_files": untracked,
+        "md5": {
+            "data/calibration/calibration_results.json": cal_md5,
+            "part2/identifiability.py": _md5(Path(__file__).resolve()),
+            "calibrate.py": _md5(PROJECT_ROOT / "calibrate.py"),
+            "generate_labels.py": _md5(PROJECT_ROOT / "generate_labels.py"),
+            "thermal_model.py": _md5(PROJECT_ROOT / "thermal_model.py"),
+        },
+        "locked_calibration_md5_expected": LOCKED_CAL_MD5,
+        "python": sys.version.split()[0], "numpy": np.__version__,
+        "scipy": scipy.__version__, "pandas": pandas.__version__,
+        "matplotlib": matplotlib.__version__, "platform": platform.platform(),
+        "executable": sys.executable, "argv": sys.argv[1:],
+        "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def _json_default(o):
+    if isinstance(o, np.bool_):
+        return bool(o)
+    if isinstance(o, np.integer):
+        return int(o)
+    if isinstance(o, np.floating):
+        return float(o)
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    raise TypeError(f"not JSON serialisable: {type(o)}")
+
+
+def _atomic_write(path: Path, payload: dict) -> None:
+    if path.name in PROTECTED_RESULTS or path.resolve().parent != RESULTS_DIR.resolve():
+        raise SpecMismatch(f"refusing to write {path}: protected or outside part2/results/")
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2, default=_json_default)
+    os.replace(tmp, path)
+
+
+def _write_stage(fname: str, analysis: str, stage: str, block: dict) -> Path:
+    path = RESULTS_DIR / fname
+    payload = {"analysis": analysis, "stages": {}}
+    if path.exists():
+        with open(path, encoding="utf-8") as fh:
+            payload = json.load(fh)
+    payload.setdefault("stages", {})[stage] = block
+    _atomic_write(path, payload)
+    return path
+
+
+def _require_stage(fname: str, stage: str, prov: dict) -> dict:
+    path = RESULTS_DIR / fname
+    blk = None
+    if path.exists():
+        with open(path, encoding="utf-8") as fh:
+            blk = json.load(fh).get("stages", {}).get(stage)
+    if blk is None:
+        raise SpecMismatch(f"stage {stage!r} must run first (not found in {fname})")
+    if blk["provenance"]["git_head"] != prov["git_head"]:
+        raise SpecMismatch(f"stage {stage!r} ran on commit {blk['provenance']['git_head'][:10]}, "
+                           f"current HEAD is {prov['git_head'][:10]}; re-run it")
+    if blk["provenance"]["dirty"] and not prov["dirty"]:
+        raise SpecMismatch(f"stage {stage!r} ran on a dirty tree; re-run it on the clean tree")
+    return blk
+
+
+def _round_half_up(x: float, nd: int) -> float:
+    return float(Decimal(repr(float(x))).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_HALF_UP))
+
+
+def _round_sf(x: float, sf: int) -> float:
+    if x == 0:
+        return 0.0
+    return _round_half_up(x, sf - 1 - int(math.floor(math.log10(abs(x)))))
+
+
+def _accept(section, printed, value, precision, source, qualifier=None, note=None,
+            definition=None) -> dict:
+    """Compare a regenerated value with §7's printed number at printed precision.
+
+    precision: ("dp", n) decimals, ("sf", n) significant figures,
+               ("le", None) printed number is an upper bound,
+               ("eq", None) exact string equality.
+    """
+    kind, k = precision
+    if kind == "dp":
+        at = _round_half_up(value, k)
+        match = abs(at - float(printed)) < 1e-12
+        label = f"dp{k}"
+    elif kind == "sf":
+        at = _round_sf(value, k)
+        match = abs(at - float(printed)) <= 1e-12 * max(1.0, abs(float(printed)))
+        label = f"sf{k}"
+    elif kind == "le":
+        at = float(value)
+        match = at <= float(printed)
+        label = "<="
+    elif kind == "eq":
+        at = str(value)
+        match = at == str(printed)
+        label = "eq"
+    else:
+        raise ValueError(kind)
+    row = {"section": section, "printed": printed, "regenerated": value,
+           "regenerated_at_printed_precision": at, "precision": label,
+           "match": bool(match), "source": source}
+    if qualifier:
+        row["qualifier"] = qualifier
+    if definition:
+        row["definition"] = definition
+    if note:
+        row["note"] = note
+    return row
+
+
+def _fmt(v) -> str:
+    if isinstance(v, (bool, np.bool_)):
+        return str(bool(v))
+    if isinstance(v, (int, np.integer)):
+        return str(int(v))
+    if isinstance(v, (float, np.floating)):
+        return f"{float(v):.10g}"
+    return str(v)
+
+
+def _print_acceptance(rows) -> None:
+    print("\n  ACCEPTANCE  (regenerated value vs §7 as printed, at printed precision)")
+    print(f"  {'§':<22s} {'printed':>16s} {'regenerated':>20s} {'prec':>5s}  match")
+    print("  " + "-" * 76)
+    for r in rows:
+        tag = " (" + r["definition"] + ")" if r.get("definition") else ""
+        print(f"  {r['section'][:22]:<22s} {str(r['printed'])[:16]:>16s} "
+              f"{_fmt(r['regenerated'])[:20]:>20s} {r['precision']:>5s}  "
+              f"{'Y' if r['match'] else 'N   <-- MISMATCH'}{tag}")
+    bad = [r for r in rows if not r["match"]]
+    print(f"  {len(rows) - len(bad)}/{len(rows)} match")
+
+
+def _mr(d) -> dict:
+    d = np.asarray(d, float)
+    return {"max_abs_K": float(np.max(np.abs(d))), "rms_K": float(np.sqrt(np.mean(d ** 2)))}
+
+
+# ---------------------------------------------------------------------------
+# Shared context: the locked Step-3 point, checked against Part 1's source
+# ---------------------------------------------------------------------------
+
+def _repro_context(locked: dict) -> dict:
+    import pandas as pd
+    j = locked["json"]
+    diag = locked["diagnostic"]
+    files = list(j["cal_cycles"])
+    ctx = {
+        "C_total": float(j["physical_constants"]["C_total_J_K"]),
+        "R_sa": float(j["step2_R_sa_result"]["R_sa_central_K_per_W"]),
+        "T_inf": float(locked["T_inf_by_ambient_C"]["25"]),
+        "files": files,
+        "stride": STEP3_SETTINGS["stride"],
+        "point": (float(diag["split"]), float(diag["R_cs_K_per_W"])),
+        "lengths": {f: len(pd.read_parquet(PROCESSED_DIR / f, columns=["time_s"])) for f in files},
+    }
+    if float(cal.C_TOTAL_J_K) != ctx["C_total"]:
+        raise SpecMismatch(f"calibrate.C_TOTAL_J_K = {cal.C_TOTAL_J_K} != locked {ctx['C_total']}")
+    src = inspect.getsource(cal.step3_diagnostic_fit)
+    for needle in STEP3_SOURCE_NEEDLES:
+        if needle not in src:
+            raise SpecMismatch(f"calibrate.step3_diagnostic_fit no longer contains {needle!r}")
+    for fn in (cal._residuals_split_Rcs, cal._residuals_split_only):
+        if RESIDUAL_SOURCE_NEEDLE not in inspect.getsource(fn):
+            raise SpecMismatch(f"{fn.__name__} no longer integrates at {RESIDUAL_SOURCE_NEEDLE}")
+    return ctx
+
+
+def _cycle_tasks(cell, ctx, spec):
+    base = {"cell": cell["name"], "T_inf": ctx["T_inf"], "C_total": ctx["C_total"],
+            "R_sa": ctx["R_sa"], "stride": ctx["stride"]}
+    return [dict(base, **spec, file=f) for f in ctx["files"]]
+
+
+def _eval_specs(pool, ctx, specs: dict, group: str) -> dict:
+    """{key: task fields} -> {key: residual over all cycles}. Longest cycle first."""
+    tasks, keys = [], []
+    for key, spec in specs.items():
+        for t in _cycle_tasks(pool.cell, ctx, spec):
+            tasks.append(t)
+            keys.append(key)
+    order = sorted(range(len(tasks)), key=lambda i: -ctx["lengths"][tasks[i]["file"]])
+    results, _ = pool.run([tasks[i] for i in order], group)
+    parts: dict = {}
+    for pos, i in enumerate(order):
+        parts.setdefault(keys[i], {})[tasks[i]["file"]] = results[pos]
+    return {k: np.concatenate([parts[k][f] for f in ctx["files"]]) for k in specs}
+
+
+def _fd_specs(p, rels, kind="resid_rcs") -> dict:
+    specs = {}
+    for rel in rels:
+        for j, name in enumerate(PARAMS2):
+            for sgn in (1, -1):
+                q = [float(p[0]), float(p[1])]
+                q[j] = p[j] + sgn * rel * p[j]
+                specs[(name, rel, sgn)] = {"kind": kind, "p": q}
+    return specs
+
+
+def _fd_jac(res: dict, p, rels) -> dict:
+    """Central difference, relative step d = rel * p_j, absolute units."""
+    out = {}
+    for rel in rels:
+        nums, cols = {}, []
+        for j, name in enumerate(PARAMS2):
+            num = res[(name, rel, 1)] - res[(name, rel, -1)]
+            nums[name] = num
+            cols.append(num / (2.0 * rel * p[j]))
+        out[rel] = {"J": np.column_stack(cols), "num": nums}
+    return out
+
+
+def _invariance(jac: dict, rels) -> dict:
+    ref = max(rels)
+    norms = {rel: np.linalg.norm(jac[rel]["J"], axis=0) for rel in rels}
+    dev = {rel: norms[rel] / norms[ref] - 1.0 for rel in rels}
+    lo, hi = min(rels), max(rels)
+    # log-log slope of ||J|| against the step: 0 for a real derivative,
+    # -1 when the finite difference is noise divided by the step.
+    slope = {name: float(np.log(norms[lo][j] / norms[hi][j]) / np.log(lo / hi))
+             for j, name in enumerate(PARAMS2)}
+    max_dev = float(max(abs(v) for rel in rels for v in dev[rel]))
+    return {"col_norms": {str(rel): dict(zip(PARAMS2, map(float, norms[rel]))) for rel in rels},
+            f"rel_dev_vs_{ref}": {str(rel): dict(zip(PARAMS2, map(float, dev[rel]))) for rel in rels},
+            "max_abs_rel_dev": max_dev, "loglog_slope_norm_vs_step": slope,
+            "step_invariant": bool(max_dev <= STEP_INVARIANCE_RTOL),
+            "tolerance": STEP_INVARIANCE_RTOL}
+
+
+# ---------------------------------------------------------------------------
+# --jacobian-diagnostic
+# ---------------------------------------------------------------------------
+
+def _stage_jacobian(locked, ctx, workers, book) -> dict:
+    p = ctx["point"]
+    rows, gates = [], []
+    base_spec = {"kind": "resid_rcs", "p": list(p)}
+    print(f"  point: split = {p[0]!r}, R_cs = {p[1]!r} (locked Step 3)", flush=True)
+
+    with _CellPool(CELL_LOOSE_NATIVE, 4, book) as la:
+        with _CellPool(CELL_LOOSE_NATIVE, len(ctx["files"]), book) as lb:
+            g, rb = _gate(la, lb, _cycle_tasks(CELL_LOOSE_NATIVE, ctx, base_spec),
+                          "Part 1 residual at the locked Step-3 point", np.concatenate)
+        gates.append(g)
+        base_loose = np.concatenate(rb)
+        loose = _eval_specs(la, ctx, _fd_specs(p, REPRO_RELS), "loose: central-FD points")
+
+    with _CellPool(CELL_TIGHT, workers, book) as ta:
+        with _CellPool(CELL_TIGHT, len(ctx["files"]), book) as tb:
+            g, rb = _gate(ta, tb, _cycle_tasks(CELL_TIGHT, ctx, base_spec),
+                          "Part 1 residual at the locked Step-3 point", np.concatenate)
+        gates.append(g)
+        base_tight = np.concatenate(rb)
+        specs = _fd_specs(p, REPRO_RELS)
+        specs["reimpl"] = {"kind": "resid_rcs_reimpl", "p": list(p)}
+        tight = _eval_specs(ta, ctx, specs,
+                            "tight: central-FD points + reimplementation cross-check")
+
+    Jt, Jl = _fd_jac(tight, p, REPRO_RELS), _fd_jac(loose, p, REPRO_RELS)
+    inv_t, inv_l = _invariance(Jt, REPRO_RELS), _invariance(Jl, REPRO_RELS)
+    gates.append({"name": "step invariance, tight Jacobian", "passed": inv_t["step_invariant"],
+                  "max_abs_rel_dev": inv_t["max_abs_rel_dev"], "tolerance": STEP_INVARIANCE_RTOL})
+    if not inv_t["step_invariant"]:
+        raise SpecMismatch(f"tight Jacobian not step-invariant: {inv_t['max_abs_rel_dev']:.3e}")
+
+    noise = {}
+    for rel in REPRO_RELS:
+        for name in PARAMS2:
+            nt, nl = Jt[rel]["num"][name], Jl[rel]["num"][name]
+            sig, nz = float(np.linalg.norm(nt)), float(np.linalg.norm(nl - nt))
+            noise[f"{name}@{rel}"] = {"signal_norm_K": sig,
+                                      "loose_numerator_norm_K": float(np.linalg.norm(nl)),
+                                      "noise_norm_K": nz, "noise_to_signal": nz / sig}
+
+    diff = base_loose - base_tight
+    n = int(base_tight.size)
+    rms_t = float(np.sqrt(np.mean(base_tight ** 2)))
+    rms_l = float(np.sqrt(np.mean(base_loose ** 2)))
+    re_same, re_max = _bitwise(tight["reimpl"], base_tight)
+
+    ci, ci_loose = {}, {}
+    for rel in REPRO_RELS:
+        for store, J, f in ((ci, Jt, base_tight), (ci_loose, Jl, base_loose)):
+            c = cal._jacobian_ci(SimpleNamespace(fun=f, jac=J[rel]["J"]), n_params=2)
+            store[str(rel)] = {"split_abs": float(c[0]), "R_cs_abs": float(c[1]),
+                               "split_pct": float(100 * c[0] / p[0]),
+                               "R_cs_pct": float(100 * c[1] / p[1])}
+
+    with open(RESULTS_DIR / "phase_a_noise_diagnostic.json", encoding="utf-8") as fh:
+        nd = json.load(fh)["part1_week2_crb"]
+    crb = float(nd["stride10"]["crb_rel_ci95_pct"]["R_cs"])
+    sig_k = float(nd["operating_point"]["sigma_K"])
+    resc_rms = crb * rms_t / sig_k
+    resc_s = resc_rms * math.sqrt(n / (n - 2))
+    ci_main = ci["0.02"]["R_cs_pct"]
+    part1_ci = float(locked["diagnostic"]["R_cs_ci95_pct"])
+    part1_rmse = float(locked["diagnostic"]["cal_rmse_C"])
+
+    nt_, nl_ = inv_t["col_norms"], inv_l["col_norms"]
+    add = rows.append
+    add(_accept("§7.4", "2.3761", nt_["0.02"]["R_cs"], ("dp", 4), "tight ||J_Rcs||, rel 0.02"))
+    add(_accept("§7.4", "2.3767", nt_["0.005"]["R_cs"], ("dp", 4), "tight ||J_Rcs||, rel 0.005"))
+    add(_accept("§7.4", "2.3763", nt_["0.001"]["R_cs"], ("dp", 4), "tight ||J_Rcs||, rel 0.001"))
+    add(_accept("§7.4", "82.5", nl_["0.02"]["R_cs"], ("dp", 1), "loose ||J_Rcs||, rel 0.02"))
+    add(_accept("§7.4", "272.1", nl_["0.005"]["R_cs"], ("dp", 1), "loose ||J_Rcs||, rel 0.005"))
+    add(_accept("§7.4", "20", max(REPRO_RELS) / min(REPRO_RELS), ("dp", 0),
+                "tight-table step range 0.02 / 0.001", qualifier="'20x range'"))
+    for rel, p_sig, p_nz, p_rat in ((0.02, "0.153", "5.33", "35"), (0.005, "0.038", "4.39", "114")):
+        d = noise[f"R_cs@{rel}"]
+        add(_accept("§7.4", p_sig, d["signal_norm_K"], ("dp", 3), f"||tight FD numerator||, R_cs, rel {rel}"))
+        add(_accept("§7.4", p_nz, d["noise_norm_K"], ("dp", 2), f"||loose - tight numerator||, R_cs, rel {rel}"))
+        add(_accept("§7.4", p_rat, d["noise_to_signal"], ("dp", 0), f"noise / signal, R_cs, rel {rel}"))
+    add(_accept("§7.4", "0.276", float(np.max(np.abs(diff))), ("dp", 3), "max |loose - tight| residual"))
+    add(_accept("§7.4", "0.056", float(np.sqrt(np.mean(diff ** 2))), ("dp", 3), "rms (loose - tight) residual"))
+    add(_accept("§7.3, §7.4", "0.576", rms_t, ("dp", 3), "tight residual RMS at the locked Step-3 point"))
+    add(_accept("§7.4", "0.5763", rms_t, ("dp", 4), "tight residual RMS at the locked Step-3 point"))
+    add(_accept("§7.4", "29.53", ci_main, ("dp", 2), "calibrate._jacobian_ci on the tight Jacobian, rel 0.02"))
+    add(_accept("§7.4", "11.78", ci["0.02"]["split_pct"], ("dp", 2), "calibrate._jacobian_ci, split, rel 0.02"))
+    add(_accept("§7.1, 7.3, 7.4 x3, 7.6 x2, 7.7", "29.5", ci_main, ("dp", 1),
+                "calibrate._jacobian_ci on the tight Jacobian, rel 0.02"))
+    add(_accept("§7.4", "29.52", resc_rms, ("dp", 2), "CRB 28.40 % x tight RMS / 0.5544 K"))
+    add(_accept("§7.4", "0.01", abs(ci_main - resc_rms), ("dp", 2),
+                "|CI route - rescale route|, read as percentage points", qualifier="about"))
+    add(_accept("§7.4", "0.01", 100 * abs(ci_main - resc_rms) / resc_rms, ("dp", 2),
+                "|CI route - rescale route|, read as a relative percentage", qualifier="about"))
+    add(_accept("§7.4", "54", ci_main / part1_ci, ("dp", 0), "tight CI / Part 1's 0.5497 %"))
+    add(_accept("§7.1", "50", ci_main / part1_ci, ("sf", 1), "tight CI / Part 1's 0.5497 %",
+                qualifier="roughly"))
+    obs = book.observed("loose_native")
+    add(_accept("§7.4", str((1e-3, 1e-5, 20.0)), str(obs[0]) if len(obs) == 1 else str(obs), ("eq", None),
+                "solver arguments the Part 1 residual actually passed (C2 log)",
+                note="printed as rtol = 1e-3, atol = 1e-5, max_step = 20 s"))
+
+    ref_nums = {f"{name}@{rel}": {"values": Jt[rel]["num"][name],
+                                  "norm_K": float(np.linalg.norm(Jt[rel]["num"][name])),
+                                  "sha256": hashlib.sha256(np.ascontiguousarray(Jt[rel]["num"][name]).tobytes()).hexdigest()}
+                for rel in FACTORIAL_RELS for name in PARAMS2}
+    return {
+        "description": "Locked Step-3 point; Part 1's calibrate._residuals_split_Rcs on the "
+                       "three calibration cycles at stride 10; central FD with d = rel * p.",
+        "point": {"split": p[0], "R_cs": p[1], "C_total_J_K": ctx["C_total"],
+                  "R_sa_K_per_W": ctx["R_sa"], "T_inf_C": ctx["T_inf"],
+                  "cycles": ctx["files"], "stride": ctx["stride"], "n_residual": n},
+        "gates": gates,
+        "tight_jacobian": inv_t,
+        "loose_jacobian": inv_l,
+        "noise_decomposition": noise,
+        "residuals": {"tight_rms_K": rms_t, "loose_rms_K": rms_l,
+                      "loose_minus_tight": _mr(diff),
+                      "locked_cal_rmse_C": part1_rmse,
+                      "loose_rms_minus_locked_cal_rmse_K": rms_l - part1_rmse},
+        "reimplementation_crosscheck": {
+            "compared": "Phase A scratch reimplementation vs calibrate._residuals_split_Rcs, "
+                        "both tight, at the locked Step-3 point",
+            "bitwise_identical": re_same, "max_abs_diff_K": re_max},
+        "ci_route": {"function": "calibrate._jacobian_ci", "tight": ci, "loose_central_fd": ci_loose},
+        "crb_rescale_route": {
+            "source": "phase_a_noise_diagnostic.json part1_week2_crb.stride10.crb_rel_ci95_pct.R_cs "
+                      "and operating_point.sigma_K",
+            "crb_pct_at_sigma": crb, "sigma_K": sig_k, "tight_rms_K": rms_t,
+            "rescaled_pct_rms_over_n": resc_rms, "rescaled_pct_s_over_n_minus_2": resc_s,
+            "ci_route_minus_rescale_pp": ci_main - resc_rms,
+            "ci_route_minus_rescale_relative_pct": 100 * (ci_main - resc_rms) / resc_rms,
+            "ci_route_minus_rescale_s_pp": ci_main - resc_s},
+        "ratios": {"tight_ci_over_part1_ci": ci_main / part1_ci, "part1_ci_pct": part1_ci},
+        "reference_numerators": ref_nums,
+        "acceptance": rows,
+    }
+
+
+def _stage_factorial(locked, ctx, workers, book, jac_block) -> dict:
+    p = ctx["point"]
+    ref = {(name, rel): np.asarray(jac_block["reference_numerators"][f"{name}@{rel}"]["values"], float)
+           for rel in FACTORIAL_RELS for name in PARAMS2}
+    cells_out, gates = {}, []
+    for cname in ("rtol1e-3_ms20", "rtol1e-3_ms5", "rtol1e-10_ms20"):
+        tol = FACTORIAL_CELLS[cname]
+        cell = _cell(cname, tol, tol)
+        n_workers = workers if tol["rtol"] < 1e-6 else 4
+        print(f"  cell {cname}: rtol={tol['rtol']}, atol={tol['atol']}, max_step={tol['max_step']}", flush=True)
+        with _CellPool(cell, n_workers, book) as pa:
+            with _CellPool(cell, len(ctx["files"]), book) as pb:
+                g, _ = _gate(pa, pb, _cycle_tasks(cell, ctx, {"kind": "resid_rcs", "p": list(p)}),
+                             f"factorial {cname}: residual at the locked Step-3 point", np.concatenate)
+            gates.append(g)
+            res = _eval_specs(pa, ctx, _fd_specs(p, FACTORIAL_RELS), f"factorial {cname}: central-FD points")
+        J = _fd_jac(res, p, FACTORIAL_RELS)
+        inv = _invariance(J, FACTORIAL_RELS)
+        entry = {"tolerances": tol, "col_norms": inv["col_norms"],
+                 "step_invariance": {k: inv[k] for k in ("max_abs_rel_dev", "loglog_slope_norm_vs_step",
+                                                          "step_invariant")},
+                 "noise": {}}
+        for rel in FACTORIAL_RELS:
+            for name in PARAMS2:
+                r_ = ref[(name, rel)]
+                sig, nz = float(np.linalg.norm(r_)), float(np.linalg.norm(J[rel]["num"][name] - r_))
+                entry["noise"][f"{name}@{rel}"] = {"noise_norm_K": nz, "signal_norm_K": sig,
+                                                   "noise_to_signal": nz / sig}
+        cells_out[cname] = entry
+    ref_inv = jac_block["tight_jacobian"]
+    cells_out[FACTORIAL_REFERENCE] = {
+        "tolerances": FACTORIAL_CELLS[FACTORIAL_REFERENCE],
+        "col_norms": {str(rel): ref_inv["col_norms"][str(rel)] for rel in FACTORIAL_RELS},
+        "noise": {f"{name}@{rel}": {"noise_norm_K": 0.0,
+                                    "signal_norm_K": jac_block["reference_numerators"][f"{name}@{rel}"]["norm_K"],
+                                    "noise_to_signal": 0.0}
+                  for rel in FACTORIAL_RELS for name in PARAMS2},
+        "source": "stage 'jacobian' (same commit): the noise reference",
+    }
+
+    verdicts = {}
+    for rel in FACTORIAL_RELS:
+        for name in PARAMS2:
+            k = f"{name}@{rel}"
+            a = cells_out["rtol1e-3_ms20"]["noise"][k]["noise_to_signal"]
+            b = cells_out["rtol1e-3_ms5"]["noise"][k]["noise_to_signal"]
+            c = cells_out["rtol1e-10_ms20"]["noise"][k]["noise_to_signal"]
+            tol_alone, step_alone = c <= FACTORIAL_CLEAN, b <= FACTORIAL_CLEAN
+            if tol_alone and not step_alone:
+                carrier = "rtol/atol"
+            elif step_alone and not tol_alone:
+                carrier = "max_step"
+            elif tol_alone and step_alone:
+                carrier = "either alone suffices"
+            else:
+                carrier = "neither alone"
+            verdicts[k] = {"noise_to_signal_part1_cell": a,
+                           "tightening_rtol_atol_only": c, "tightening_max_step_only": b,
+                           "reduction_from_rtol_atol": a / c if c else float("inf"),
+                           "reduction_from_max_step": a / b if b else float("inf"),
+                           "carrier": carrier}
+    carriers = sorted({v["carrier"] for v in verdicts.values()})
+    overall = carriers[0] if len(carriers) == 1 else "mixed: " + ", ".join(carriers)
+    rows = [_accept("§7.4", "rtol/atol", overall, ("eq", None),
+                    "2x2 factorial {rtol/atol} x {max_step}: the factor whose tightening alone "
+                    f"brings noise/signal to <= {FACTORIAL_CLEAN}",
+                    note="§7.4: 'The cause is the solver tolerance inside the residual function.'")]
+    return {"description": "2x2 factorial at the locked Step-3 point: {rtol/atol: (1e-3, 1e-5), "
+                           "(1e-10, 1e-12)} x {max_step: 20, 5}. Noise = ||numerator - reference|| "
+                           "with the (1e-10, 5) cell as the reference.",
+            "clean_threshold_noise_to_signal": FACTORIAL_CLEAN,
+            "gates": gates, "cells": cells_out, "verdict_by_column_and_step": verdicts,
+            "verdict": overall, "acceptance": rows}
+
+
+def _stage_refit(locked, ctx, workers, book, jac_block) -> dict:
+    lock = locked["diagnostic"]
+    base = {"kind": "refit", "files": ctx["files"], "T_inf": ctx["T_inf"],
+            "C_total": ctx["C_total"], "R_sa": ctx["R_sa"], "settings": STEP3_SETTINGS}
+    with _CellPool(CELL_LOOSE_NATIVE, 2, book) as pa, _CellPool(CELL_LOOSE_NATIVE, 1, book) as pb:
+        fa = pa.submit([dict(base, cell=pa.cell["name"], x_scale="jac"),
+                        dict(base, cell=pa.cell["name"], x_scale=1.0)])
+        fb = pb.submit([dict(base, cell=pb.cell["name"], x_scale="jac")])
+        ra, la = pa.collect(fa, "Step-3 refits: x_scale='jac' and x_scale=1.0 (pool A)")
+        rb, lb = pb.collect(fb, "Step-3 refit: x_scale='jac' determinism twin (pool B)")
+    rj, r1, rj_twin = ra[0], ra[1], rb[0]
+    same_x, dx = _bitwise(rj["x"], rj_twin["x"])
+    same_f, df = _bitwise(rj["fun"], rj_twin["fun"])
+    gate = {"name": "Step-3 refit (x_scale='jac') run twice in different processes",
+            "cell": "loose_native", "pids_a": [la[0]["pid"]], "pids_b": [lb[0]["pid"]],
+            "different_processes": la[0]["token"] != lb[0]["token"],
+            "bitwise_identical": bool(same_x and same_f and rj["message"] == rj_twin["message"]),
+            "max_abs_diff": max(dx, df)}
+    gate["passed"] = bool(gate["different_processes"] and gate["bitwise_identical"])
+    print(f"    gate [loose_native] {gate['name']}: bitwise={gate['bitwise_identical']} "
+          f"-> {'PASS' if gate['passed'] else 'FAIL'}", flush=True)
+    if not gate["passed"]:
+        raise SpecMismatch("determinism gate failed for the Step-3 refit")
+
+    tight_locked = jac_block["tight_jacobian"]["col_norms"]["0.02"]
+    refits = {}
+    for tag, r in (("x_scale='jac'", rj), ("x_scale=1.0", r1)):
+        norms = dict(zip(PARAMS2, map(float, r["jac_col_norms"])))
+        refits[tag] = {
+            "x": dict(zip(PARAMS2, map(float, r["x"]))), "cost": r["cost"],
+            "rms_C": float(np.sqrt(np.mean(r["fun"] ** 2))), "n_residual": int(r["fun"].size),
+            "nfev": r["nfev"], "njev": r["njev"], "status": r["status"], "message": r["message"],
+            "active_mask": r["active_mask"],
+            "message_equals_locked": r["message"] == lock["optimizer_message"],
+            "ci95_abs": dict(zip(PARAMS2, map(float, r["ci95_abs"]))),
+            "ci95_pct": {n_: float(100 * r["ci95_abs"][j] / r["x"][j]) for j, n_ in enumerate(PARAMS2)},
+            "jac_col_norms": norms,
+            "distance_to_locked_pct": {
+                "split": float(100 * abs(r["x"][0] - lock["split"]) / lock["split"]),
+                "R_cs": float(100 * abs(r["x"][1] - lock["R_cs_K_per_W"]) / lock["R_cs_K_per_W"])},
+            "printed_definition_ratio": {n_: norms[n_] / tight_locked[n_] for n_ in PARAMS2},
+        }
+    x_j = refits["x_scale='jac'"]
+    pr1 = refits["x_scale=1.0"]["printed_definition_ratio"]
+    rows = [
+        _accept("§7.4", "0.9367", x_j["x"]["split"], ("dp", 4), "re-run of Step 3 (x_scale='jac'), split"),
+        _accept("§7.4", "1.4722", x_j["x"]["R_cs"], ("dp", 4), "re-run of Step 3 (x_scale='jac'), R_cs"),
+        _accept("§7.4", "8.8", x_j["distance_to_locked_pct"]["R_cs"], ("dp", 1),
+                "|re-run R_cs - locked R_cs| / locked R_cs, %"),
+        _accept("§7.4", lock["optimizer_message"], x_j["message"], ("eq", None),
+                "termination message of the re-run vs the locked artifact"),
+        _accept("§7.4", "15.8", pr1["split"], ("dp", 1),
+                "x_scale=1.0 refit res.jac norm (refit point) / tight norm (locked point), split",
+                definition="printed"),
+        _accept("§7.4", "45.0", pr1["R_cs"], ("dp", 1),
+                "x_scale=1.0 refit res.jac norm (refit point) / tight norm (locked point), R_cs",
+                definition="printed"),
+    ]
+    return {"description": "calibrate.step3_diagnostic_fit's least_squares call, re-run in a worker "
+                           "with Part 1's residual unmodified (verbose=0; numerics unaffected).",
+            "settings": STEP3_SETTINGS, "locked": {"split": lock["split"], "R_cs": lock["R_cs_K_per_W"],
+                                                   "cal_rmse_C": lock["cal_rmse_C"],
+                                                   "optimizer_message": lock["optimizer_message"]},
+            "tight_norms_at_locked_point_rel_0.02": tight_locked,
+            "gates": [gate], "refits": refits, "acceptance": rows}
+
+
+def _stage_refit_jacobian(locked, ctx, workers, book, refit_block) -> dict:
+    r1 = refit_block["refits"]["x_scale=1.0"]
+    q = (float(r1["x"]["split"]), float(r1["x"]["R_cs"]))
+    print(f"  point: x_scale=1.0 refit, split = {q[0]!r}, R_cs = {q[1]!r}", flush=True)
+    gates = []
+    with _CellPool(CELL_TIGHT, workers, book) as ta:
+        with _CellPool(CELL_TIGHT, len(ctx["files"]), book) as tb:
+            g, _ = _gate(ta, tb, _cycle_tasks(CELL_TIGHT, ctx, {"kind": "resid_rcs", "p": list(q)}),
+                         "Part 1 residual at the x_scale=1.0 refit point", np.concatenate)
+        gates.append(g)
+        res = _eval_specs(ta, ctx, _fd_specs(q, REPRO_RELS), "tight: central-FD points at the refit point")
+    J = _fd_jac(res, q, REPRO_RELS)
+    inv = _invariance(J, REPRO_RELS)
+    gates.append({"name": "step invariance, tight Jacobian at the refit point",
+                  "passed": inv["step_invariant"], "max_abs_rel_dev": inv["max_abs_rel_dev"],
+                  "tolerance": STEP_INVARIANCE_RTOL})
+    if not inv["step_invariant"]:
+        raise SpecMismatch("tight Jacobian at the refit point is not step-invariant")
+    lfl = {n_: r1["jac_col_norms"][n_] / inv["col_norms"]["0.02"][n_] for n_ in PARAMS2}
+    rows = [
+        _accept("§7.4", "15.8", lfl["split"], ("dp", 1),
+                "x_scale=1.0 refit res.jac norm / tight norm, both at the refit point, split",
+                definition="like-for-like"),
+        _accept("§7.4", "45.0", lfl["R_cs"], ("dp", 1),
+                "x_scale=1.0 refit res.jac norm / tight norm, both at the refit point, R_cs",
+                definition="like-for-like"),
+    ]
+    return {"point": {"split": q[0], "R_cs": q[1], "source": "stage 'refit', x_scale=1.0"},
+            "gates": gates, "tight_jacobian": inv,
+            "ratios": {"printed_definition": r1["printed_definition_ratio"], "like_for_like": lfl},
+            "acceptance": rows}
+
+
+# ---------------------------------------------------------------------------
+# --split-profile
+# ---------------------------------------------------------------------------
+
+PROFILE_PRINTED = {  # §7.5 table: split -> (tight cost, loose cost)
+    0.80: ("477.165", "529.774"), 0.85: ("474.393", "524.165"), 0.90: ("471.847", "536.690"),
+    "locked": ("470.537", "460.352"), 0.93: ("470.461", "455.164"), 0.95: ("469.607", "482.227"),
+    0.97: ("468.805", "464.950"), 0.98: ("468.402", "462.056"), 0.99: ("467.946", "466.466"),
+}
+
+
+def _run_split_profile(locked, workers, book) -> dict:
+    ctx = _repro_context(locked)
+    central = locked["json"]["step5_band_per_point"]["central"]
+    r_cs, lsplit = float(central["R_cs_K_per_W"]), float(central["split"])
+    splits = [(lsplit if s == "locked" else float(s), s) for s in PROFILE_SPLITS]
+    spec = lambda s: {"kind": "resid_split_only", "split": s, "R_cs": r_cs}  # noqa: E731
+    out, gates = {}, []
+    for cell, nw in ((CELL_LOOSE_NATIVE, 4), (CELL_TIGHT, workers)):
+        with _CellPool(cell, nw, book) as pa:
+            with _CellPool(cell, len(ctx["files"]), book) as pb:
+                g, _ = _gate(pa, pb, _cycle_tasks(cell, ctx, spec(lsplit)),
+                             "Part 1 split-only residual at the locked central split", np.concatenate)
+            gates.append(g)
+            res = _eval_specs(pa, ctx, {s: spec(s) for s, _ in splits}, "nine-point split profile")
+        out[cell["name"]] = {s: {"cost": float(0.5 * np.sum(r ** 2)),
+                                 "rmse_C": float(np.sqrt(np.mean(r ** 2)))} for s, r in res.items()}
+    ct = [out["tight"][s]["cost"] for s, _ in splits]
+    cl = [out["loose_native"][s]["cost"] for s, _ in splits]
+    mono_t = all(ct[i] >= ct[i + 1] for i in range(len(ct) - 1))
+    mono_l = all(cl[i] >= cl[i + 1] for i in range(len(cl) - 1))
+    arg_t = splits[int(np.argmin(ct))][0]
+    arg_l = splits[int(np.argmin(cl))][0]
+    rng_t, rng_l = max(ct) - min(ct), max(cl) - min(cl)
+    with open(RESULTS_DIR / "phase_a_split_refit_diagnostic.json", encoding="utf-8") as fh:
+        s_fits = {f["name"]: f for f in json.load(fh)["fits"] if f["diff_step"] == 0.02}
+
+    rows = []
+    for (s, label), c_t, c_l in zip(splits, ct, cl):
+        pt, pl = PROFILE_PRINTED[label]
+        rows.append(_accept("§7.5", pt, c_t, ("dp", 3), f"tight cost at split {s:.16g}"))
+        rows.append(_accept("§7.5", pl, c_l, ("dp", 3), f"loose cost at split {s:.16g}"))
+    rows += [
+        _accept("§7.5", "9.22", rng_t, ("dp", 2), "tight cost range over the grid"),
+        _accept("§7.5", "1.97", 100 * rng_t / min(ct), ("dp", 2), "tight range, % of minimum"),
+        _accept("§7.5", "81.53", rng_l, ("dp", 2), "loose cost range over the grid"),
+        _accept("§7.5", "17.9", 100 * rng_l / min(cl), ("dp", 1), "loose range, % of minimum"),
+        _accept("§7.5", "9", rng_l / rng_t, ("dp", 0), "loose range / tight range",
+                qualifier="roughly nine times"),
+        _accept("§7.5", "True", mono_t, ("eq", None), "tight cost non-increasing in split"),
+        _accept("§7.5", "False", mono_l, ("eq", None), "loose cost non-increasing in split"),
+        _accept("§7.5", "0.93", arg_l, ("dp", 2), "loose argmin (= p0)"),
+        _accept("§7.5", "0.99", arg_t, ("dp", 2), "tight argmin (= bound)"),
+    ]
+    return {"description": "calibrate._residuals_split_only at the central R_cs, three calibration "
+                           "cycles, stride 10; cost = 0.5 * sum(residual^2).",
+            "R_cs": r_cs, "locked_split": lsplit, "splits": [s for s, _ in splits],
+            "gates": gates,
+            "profile": {cn: {f"{s:.16g}": v for s, v in d.items()} for cn, d in out.items()},
+            "summary": {"tight_monotone_non_increasing": mono_t, "loose_monotone_non_increasing": mono_l,
+                        "tight_argmin": arg_t, "loose_argmin": arg_l,
+                        "tight_range": rng_t, "loose_range": rng_l, "loose_over_tight": rng_l / rng_t},
+            "crosscheck": {"tight_cost_at_0.99": out["tight"][0.99]["cost"],
+                           "phase_a_split_refit_fits_central_cost": s_fits["central"]["cost"],
+                           "phase_a_split_refit_fits_central_split": s_fits["central"]["split"]},
+            "acceptance": rows}
+
+
+# ---------------------------------------------------------------------------
+# --tolerance-bounds
+# ---------------------------------------------------------------------------
+
+def _labels_context():
+    import pandas as pd
+    import generate_labels as gl
+    splits = gl.load_band_splits()
+    if any(v.get("source") != "summary" for v in splits.values()):
+        raise SpecMismatch("band splits were not read from the locked summary (would re-fit)")
+    files = sorted(p.name for p in LABELED_DIR.glob("*.parquet") if not p.name.startswith("_"))
+    if len(files) != 11:
+        raise SpecMismatch(f"expected 11 labeled cycles, found {len(files)}")
+    lengths = {f: len(pd.read_parquet(PROCESSED_DIR / f, columns=["time_s"])) for f in files}
+    return gl, splits, files, lengths
+
+
+def _stage_labels(locked, workers, book) -> dict:
+    import pandas as pd
+    gl, splits, files, lengths = _labels_context()
+    order = sorted(files, key=lambda f: -lengths[f])
+    us06 = next(f for f in files if "_US06_" in f)
+    probe = [{"kind": "label_central", "file": us06, "splits": splits}]
+    as_arr = lambda rs: np.concatenate([rs[0]["T_core"], rs[0]["T_surf"]])  # noqa: E731
+    gates = []
+    with _CellPool(CELL_TIGHT, workers, book) as ta, _CellPool(CELL_LABEL_NATIVE, 3, book) as na:
+        with _CellPool(CELL_TIGHT, 1, book) as tb, _CellPool(CELL_LABEL_NATIVE, 1, book) as nb:
+            gates.append(_gate(ta, tb, probe, "label-constant central trace, US06", as_arr)[0])
+            gates.append(_gate(na, nb, probe, "label-constant central trace, US06", as_arr)[0])
+        mk = lambda cell: [{"cell": cell["name"], "kind": "label_cycle", "file": f, "splits": splits}  # noqa: E731
+                           for f in order]
+        ft, fn = ta.submit(mk(CELL_TIGHT)), na.submit(mk(CELL_LABEL_NATIVE))
+        rt, _ = ta.collect(ft, "tight: generate_labels.label_one_cycle, 11 cycles")
+        rn, _ = na.collect(fn, "label-native: generate_labels.label_one_cycle, 11 cycles")
+
+    per, flat = {}, []
+    for f, t_out, n_out in zip(order, rt, rn):
+        stored = pd.read_parquet(LABELED_DIR / f, columns=list(LABEL_COLS))
+        entry = {}
+        for col in LABEL_COLS:
+            s = stored[col].to_numpy(dtype=float)
+            entry[col] = {"tight_vs_stored": _mr(t_out[col] - s),
+                          "native_vs_stored": _mr(n_out[col] - s),
+                          "tight_vs_native": _mr(t_out[col] - n_out[col])}
+            flat.append((f, col, entry[col]))
+        per[f] = entry
+
+    def gmax(key, stat):
+        f, col, e = max(flat, key=lambda x: x[2][key][stat])
+        return {"value_K": e[key][stat], "cycle": f, "channel": col}
+
+    maxima = {key: {stat: gmax(key, stat) for stat in ("max_abs_K", "rms_K")}
+              for key in ("tight_vs_stored", "native_vs_stored", "tight_vs_native")}
+    us06_rms = per[us06]["T_core_model_C"]["tight_vs_stored"]["rms_K"]
+    obs = book.observed("label_native")
+    rows = [
+        _accept("§7.6", "0.02", maxima["tight_vs_stored"]["max_abs_K"]["value_K"], ("le", None),
+                "max |tight - stored| over 11 cycles x 4 stored channels",
+                qualifier="bound: '<= 2e-2 °C on any trace'"),
+        _accept("§7.6", "3e-3", us06_rms, ("sf", 1), "US06 T_core, rms |tight - stored|",
+                qualifier="roughly"),
+        _accept("§7.6", str((1e-6, 1e-8, 5.0)), str(obs[0]) if len(obs) == 1 else str(obs), ("eq", None),
+                "solver arguments generate_labels actually passed (C2 log)",
+                note="printed as rtol = 1e-6, atol = 1e-8"),
+    ]
+    return {"description": "generate_labels.label_one_cycle (Part 1's label function) at its native "
+                           "tolerance and at tight tolerance, all 11 labeled cycles, against "
+                           "data/labeled/ (read-only).",
+            "label_constants": {"T_INF_25C_C": gl.T_INF_25C_C, "R_SA_K_PER_W": gl.R_SA_K_PER_W,
+                                "band_splits": splits},
+            "gates": gates, "per_cycle": per, "maxima": maxima,
+            "us06_T_core_rms_tight_vs_stored_K": us06_rms, "acceptance": rows}
+
+
+def _stage_metrics(locked, workers, book) -> dict:
+    import pandas as pd
+    gl, splits, files, _ = _labels_context()
+    j = locked["json"]
+    c4 = j["step4_central_fit"]
+    params = {"C_core": float(c4["C_core_J_K"]), "C_surf": float(c4["C_surf_J_K"]),
+              "R_cs": float(c4["R_cs_K_per_W"]), "R_sa": float(c4["R_sa_K_per_W"])}
+    t25 = float(locked["T_inf_by_ambient_C"]["25"])
+    step6 = {r["file_id"] + ".parquet": r for r in j["step6_validation_per_cycle"]}
+    cycles = {f: t25 for f in files}
+    for f, r in step6.items():
+        t_used = float(r["T_inf_used_C"])
+        if f in cycles and cycles[f] != t_used:
+            raise SpecMismatch(f"{f}: step6 T_inf {t_used} != locked 25 °C T_inf {cycles[f]}")
+        cycles[f] = t_used
+    lengths = {f: len(pd.read_parquet(PROCESSED_DIR / f, columns=["time_s"])) for f in cycles}
+    order = sorted(cycles, key=lambda f: -lengths[f])
+    us06 = next(f for f in files if "_US06_" in f)
+    probe = [{"kind": "evaluate", "file": us06, "T_inf": t25, "params": params}]
+    as_arr = lambda rs: np.concatenate([rs[0]["T_core"], rs[0]["T_surf"]])  # noqa: E731
+    gates = []
+    with _CellPool(CELL_TIGHT, workers, book) as ta, _CellPool(CELL_LABEL_NATIVE, 3, book) as na:
+        with _CellPool(CELL_TIGHT, 1, book) as tb, _CellPool(CELL_LABEL_NATIVE, 1, book) as nb:
+            gates.append(_gate(ta, tb, probe, "calibrate.evaluate_on_cycle, US06", as_arr)[0])
+            gates.append(_gate(na, nb, probe, "calibrate.evaluate_on_cycle, US06", as_arr)[0])
+        ev = lambda cell: [{"cell": cell["name"], "kind": "evaluate", "file": f,  # noqa: E731
+                            "T_inf": cycles[f], "params": params} for f in order]
+        lc = [{"cell": "tight", "kind": "label_central", "file": f, "splits": splits}
+              for f in sorted(files, key=lambda f: -lengths[f])]
+        f_ev_t, f_lc_t = ta.submit(ev(CELL_TIGHT)), ta.submit(lc)
+        f_ev_n = na.submit(ev(CELL_LABEL_NATIVE))
+        et, _ = ta.collect(f_ev_t, "tight: calibrate.evaluate_on_cycle, 14 cycles")
+        lct, _ = ta.collect(f_lc_t, "tight: label-constant central trace, 11 cycles")
+        en, _ = na.collect(f_ev_n, "label-native: calibrate.evaluate_on_cycle, 14 cycles")
+    et, en = dict(zip(order, et)), dict(zip(order, en))
+    lct = dict(zip(sorted(files, key=lambda f: -lengths[f]), lct))
+
+    metrics = {}
+    keymap = {"rmse_C": "model_rmse_C", "mae_C": "model_mae_C", "max_abs_err_C": "model_max_abs_err_C"}
+    step6_dev, all_dev = [], []
+    for f in order:
+        m = {}
+        for k, lk in keymap.items():
+            e = {"tight": et[f][k], "native_1e-6": en[f][k],
+                 "tight_minus_native": et[f][k] - en[f][k]}
+            all_dev.append((abs(e["tight_minus_native"]), f, k))
+            if f in step6:
+                e["locked"] = float(step6[f][lk])
+                e["tight_minus_locked"] = et[f][k] - e["locked"]
+                e["native_minus_locked"] = en[f][k] - e["locked"]
+                step6_dev.append((abs(e["tight_minus_locked"]), f, k))
+            m[k] = e
+        metrics[f] = {"T_inf_C": cycles[f], "in_step6": f in step6, "metrics": m}
+    rounding = {}
+    for f in files:
+        rounding[f] = {"T_core": _mr(et[f]["T_core"] - lct[f]["T_core"]),
+                       "T_surf": _mr(et[f]["T_surf"] - lct[f]["T_surf"])}
+    worst6 = max(step6_dev)
+    worst_all = max(all_dev)
+    mixed1 = next(f for f in files if "_Mixed1_" in f)
+    rnd_max = max(((v[ch]["max_abs_K"], f, ch) for f, v in rounding.items() for ch in ("T_core", "T_surf")))
+    rnd_rms = max(((v[ch]["rms_K"], f, ch) for f, v in rounding.items() for ch in ("T_core", "T_surf")))
+    obs = book.observed("label_native")
+    rows = [
+        _accept("§7.6", "0.0034", worst6[0], ("le", None),
+                "max |metric(tight) - locked Step 6 value| over 5 Step-6 cycles x (RMSE, MAE, max-abs)",
+                qualifier="bound: '<= 3.4e-3 °C on any validation metric'"),
+        _accept("§7.6", "0.383299", et[mixed1]["rmse_C"], ("dp", 6), "Mixed1 surface RMSE, tight"),
+        _accept("§7.6", "0.382905", en[mixed1]["rmse_C"], ("dp", 6),
+                "Mixed1 surface RMSE regenerated at rtol=1e-6 in this environment",
+                note="locked value; tests portability of the rtol=1e-6 result (§7.6 item 5)"),
+        _accept("§7.6", "2e-3", rounding[us06]["T_core"]["rms_K"], ("sf", 1),
+                "US06 T_core, rms |locked constants - label constants|, both tight", qualifier="about"),
+        _accept("§7.6", "23.15", gl.T_INF_25C_C, ("eq", None), "generate_labels.T_INF_25C_C"),
+        _accept("§7.6", "5.21", gl.R_SA_K_PER_W, ("eq", None), "generate_labels.R_SA_K_PER_W"),
+        _accept("§7.6", str((1e-6, 1e-8, 5.0)), str(obs[0]) if len(obs) == 1 else str(obs), ("eq", None),
+                "solver arguments evaluate_on_cycle actually passed (C2 log)"),
+    ]
+    return {"description": "calibrate.evaluate_on_cycle (Part 1's Step-6 metric function) at its native "
+                           "tolerance and at tight tolerance on the 11 labeled cycles plus the 3 other "
+                           "Step-6 cycles; rounding-only = locked constants vs generate_labels' rounded "
+                           "constants, both tight.",
+            "central_params": params, "gates": gates, "per_cycle": metrics,
+            "rounding_only": rounding,
+            "maxima": {
+                "step6_tight_minus_locked": {"value_C": worst6[0], "cycle": worst6[1], "metric": worst6[2]},
+                "all_cycles_tight_minus_native": {"value_C": worst_all[0], "cycle": worst_all[1],
+                                                  "metric": worst_all[2]},
+                "rounding_only_max_abs": {"value_K": rnd_max[0], "cycle": rnd_max[1], "channel": rnd_max[2]},
+                "rounding_only_rms": {"value_K": rnd_rms[0], "cycle": rnd_rms[1], "channel": rnd_rms[2]}},
+            "acceptance": rows}
+
+
+# ---------------------------------------------------------------------------
+# --derived  (no ODE: arithmetic on existing JSON leaves)
+# ---------------------------------------------------------------------------
+
+def _run_derived(locked) -> dict:
+    def load(name):
+        with open(RESULTS_DIR / name, encoding="utf-8") as fh:
+            return json.load(fh)
+    A = load("phase_a_identifiability.json")
+    N = load("phase_a_noise_diagnostic.json")
+    S = load("phase_a_split_refit_diagnostic.json")
+    hs = [r["h"] for r in A["step2_h_sweep"]["per_h"]]
+    s10, op = N["part1_week2_crb"]["stride10"], N["part1_week2_crb"]["operating_point"]
+    fits = {f["name"]: f for f in S["fits"] if f["diff_step"] == 0.02}
+    c_total = float(A["locked_parameters"]["C_total_J_K"])
+    c_surf_new = (1 - fits["central"]["split"]) * c_total
+    band = S["band"]
+    locked_band = band["locked_json"]["spread_max"]
+    ac = N["part2_autocorrelation"]
+    share = ac["residual_mean_C"] ** 2 / ac["residual_rms_C"] ** 2
+    split_l = float(A["locked_parameters"]["split"])
+    rows = [
+        _accept("§7.1, §7.6", "5", locked_band, ("sf", 1), "S band.locked_json.spread_max", qualifier="~"),
+        _accept("§7.1", "0.43", c_surf_new, ("dp", 2), "(1 - S fits[central].split) x C_total"),
+        _accept("§7.5", "0.432", c_surf_new, ("dp", 3), "(1 - S fits[central].split) x C_total"),
+        _accept("§7.2", "50", max(hs) / min(hs), ("dp", 0), "A step2_h_sweep.per_h[*].h, max / min"),
+        _accept("§7.4", "52", s10["ratio_vs_week2_reported"], ("dp", 0),
+                "N part1_week2_crb.stride10.ratio_vs_week2_reported"),
+        _accept("§7.4", "17", s10["crb_rel_ci95_pct"]["split"] / op["reported_ci95_pct_split"], ("dp", 0),
+                "N stride10.crb_rel_ci95_pct.split / operating_point.reported_ci95_pct_split"),
+    ]
+    for name, printed in (("low", "4.21"), ("central", "6.65"), ("high", "6.45")):
+        lk = S["locked_band_per_point"][name]["split"]
+        rows.append(_accept("§7.5", printed, 100 * (fits[name]["split"] - lk) / lk, ("dp", 2),
+                            f"100 (S fits[{name}].split - locked) / locked"))
+    rows += [
+        _accept("§7.6", "0.055", 100 * (locked_band - band["locked_splits_tight"]["spread_max"]) / locked_band,
+                ("dp", 3), "S band: (locked_json - locked_splits_tight) / locked_json, %"),
+        _accept("§7.6", "0.05", locked_band - band["new_splits"]["spread_max"], ("dp", 2),
+                "S band: locked_json - new_splits, °C"),
+        _accept("§7.6", "1", 100 * (locked_band - band["new_splits"]["spread_max"]) / locked_band,
+                ("dp", 0), "same, as % of the locked spread", qualifier="about one percent"),
+        _accept("§7.6", "7", float(A["locked_parameters"]["nominal"]["C_surf"]) / c_surf_new, ("dp", 0),
+                "locked C_surf / C_surf at split 0.99", qualifier="sevenfold"),
+        _accept("§7.7", "225", float(A["locked_parameters"]["nominal"]["R_sa"]) * c_total, ("dp", 0),
+                "R_sa x C_total, s"),
+        _accept("§7.7", "82", 100 * share, ("dp", 0),
+                "N part2_autocorrelation: mean^2 / rms^2, % of residual variance", qualifier="roughly"),
+        _accept("§7.7", "18", 100 * (1 - share), ("dp", 0), "1 - mean^2 / rms^2, %"),
+        _accept("§7.5", "93", 100 * split_l, ("dp", 0), "locked split, %"),
+        _accept("§7.5", "7", 100 * (1 - split_l), ("dp", 0), "1 - locked split, %"),
+        _accept("§7.7", "7", ac["n_eff"], ("dp", 0), "N part2_autocorrelation.n_eff", qualifier="about"),
+        _accept("§7.7", "4016", ac["n"], ("eq", None), "N part2_autocorrelation.n"),
+        _accept("§7.6, §7.7", "5", N["part3_corrected"]["step5_band"]["ratio_high_over_low"], ("dp", 0),
+                "N part3_corrected.step5_band.ratio_high_over_low", qualifier="factor of five"),
+    ]
+    tau = ac["tau_int_used_samples"]
+    supplementary = {"n_eff_scope": {
+        "us06_full_1Hz": {"n": ac["n"], "tau_int_s": tau, "n_eff": ac["n"] / (2 * tau)},
+        "three_cycles_full_1Hz": {"n": N["part3_corrected"]["rows"]["full_1Hz"]["n_samples"],
+                                  "n_eff": N["part3_corrected"]["rows"]["full_1Hz"]["n_eff"]},
+        "three_cycles_stride10": {"n": N["part3_corrected"]["rows"]["stride10"]["n_samples"],
+                                  "n_eff": N["part3_corrected"]["rows"]["stride10"]["n_eff"]},
+        "note": "the three-cycle n_eff reuse US06's tau_int, measured at the locked central "
+                "parameters; they are an extrapolation, not a three-cycle measurement"}}
+    return {"description": "§7 numbers that are arithmetic on leaves of the existing Phase A JSONs "
+                           "and the locked calibration JSON (no ODE).",
+            "inputs": ["part2/results/phase_a_identifiability.json",
+                       "part2/results/phase_a_noise_diagnostic.json",
+                       "part2/results/phase_a_split_refit_diagnostic.json",
+                       "data/calibration/calibration_results.json"],
+            "supplementary": supplementary, "acceptance": rows}
+
+
+# ---------------------------------------------------------------------------
+# Dispatcher
+# ---------------------------------------------------------------------------
+
+def run_repro(command: str, stage: str | None, workers: int, allow_dirty: bool) -> dict:
+    t0 = time.time()
+    prov = _provenance(allow_dirty)
+    locked = load_locked()
+    book = _PatchLog()
+    _rule()
+    print(f"REPRODUCIBILITY: {command}" + (f" --stage {stage}" if stage else "")
+          + f"   (HEAD {prov['git_head'][:10]}, dirty={prov['dirty']}, workers={workers})")
+    _rule()
+    if command == "derived":
+        block, fname, analysis, key = _run_derived(locked), DERIVED_JSON, "phase_a_derived", None
+    elif command == "jacobian-diagnostic":
+        ctx = _repro_context(locked)
+        fname, analysis, key = JAC_JSON, "phase_a_jacobian_diagnostic", stage
+        if stage == "jacobian":
+            block = _stage_jacobian(locked, ctx, workers, book)
+        elif stage == "factorial":
+            block = _stage_factorial(locked, ctx, workers, book, _require_stage(JAC_JSON, "jacobian", prov))
+        elif stage == "refit":
+            block = _stage_refit(locked, ctx, workers, book, _require_stage(JAC_JSON, "jacobian", prov))
+        else:
+            block = _stage_refit_jacobian(locked, ctx, workers, book, _require_stage(JAC_JSON, "refit", prov))
+    elif command == "split-profile":
+        block, fname, analysis, key = (_run_split_profile(locked, workers, book), PROFILE_JSON,
+                                       "phase_a_split_profile", None)
+    elif command == "tolerance-bounds":
+        fname, analysis, key = TOLB_JSON, "phase_a_tolerance_bounds", stage
+        block = (_stage_labels if stage == "labels" else _stage_metrics)(locked, workers, book)
+    else:
+        raise ValueError(command)
+
+    elapsed = time.time() - t0
+    block = {"provenance": dict(prov, stage=stage, workers=workers, elapsed_s=elapsed,
+                                tolerance_sets={"tight": REPRO_TIGHT, "loose_part1_residual": REPRO_LOOSE,
+                                                "label_and_step6": REPRO_LABEL}),
+             "patch_verification": book.summary(), **block}
+    if key is None:
+        path = RESULTS_DIR / fname
+        _atomic_write(path, dict(analysis=analysis, **block))
+    else:
+        path = _write_stage(fname, analysis, key, block)
+    _print_acceptance(block["acceptance"])
+    ps = block["patch_verification"]
+    if ps["groups"]:
+        print(f"\n  C2 patch log: {len(ps['groups'])} evaluation groups, "
+              f"{sum(g['simulate_T_calls'] for g in ps['groups'])} simulate_T calls, "
+              f"{sum(ps['worker_processes_by_cell'].values())} worker processes; "
+              f"all match declared: {ps['all_groups_match_declared']}")
+    else:
+        print("\n  C2 patch log: n/a (no ODE evaluated)")
+    print(f"  wrote {path.relative_to(PROJECT_ROOT).as_posix()}   ({elapsed:.0f} s)")
+    _rule()
+    return block
+
+
+# ===========================================================================
 # Driver
 # ===========================================================================
 
@@ -1319,11 +2625,37 @@ def main() -> int:
                     help="relative FD step used for the reported S / FIM")
     ap.add_argument("--workers", type=int, default=WORKERS_DEFAULT,
                     help="parallel forward simulations; 1 = fully serial")
-    ap.add_argument("--noise-diagnostic", action="store_true",
-                    help="run the noise-model diagnostic instead of Phase A")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--noise-diagnostic", action="store_true",
+                      help="run the noise-model diagnostic instead of Phase A")
+    mode.add_argument("--derived", action="store_true",
+                      help=f"§7 numbers that are arithmetic on existing JSON leaves -> {DERIVED_JSON} (no ODE)")
+    mode.add_argument("--jacobian-diagnostic", action="store_true",
+                      help=f"§7.4 Jacobian, noise, CI and refit diagnostics -> {JAC_JSON}; "
+                           f"needs --stage {{{','.join(JAC_STAGES)}}}")
+    mode.add_argument("--split-profile", action="store_true",
+                      help=f"§7.5 nine-point split profile at both tolerances -> {PROFILE_JSON}")
+    mode.add_argument("--tolerance-bounds", action="store_true",
+                      help=f"§7.6 integration-error bounds on labels and metrics -> {TOLB_JSON}; "
+                           f"needs --stage {{{','.join(TOLB_STAGES)}}}")
+    ap.add_argument("--stage", choices=JAC_STAGES + TOLB_STAGES,
+                    help="stage of --jacobian-diagnostic or --tolerance-bounds (each stage is a "
+                         "separate foreground call of under ~9 min)")
+    ap.add_argument("--allow-dirty", action="store_true",
+                    help="allow reproducibility runs with uncommitted changes to tracked files "
+                         "(provenance then records dirty=true)")
     args = ap.parse_args()
+    staged = {"jacobian-diagnostic": JAC_STAGES, "tolerance-bounds": TOLB_STAGES}
+    command = next((c for c in ("derived", "jacobian-diagnostic", "split-profile", "tolerance-bounds")
+                    if getattr(args, c.replace("-", "_"))), None)
+    if command in staged and args.stage not in staged[command]:
+        ap.error(f"--{command} needs --stage {{{','.join(staged[command])}}}")
+    if command not in staged and args.stage is not None:
+        ap.error("--stage only applies to --jacobian-diagnostic and --tolerance-bounds")
     try:
-        if args.noise_diagnostic:
+        if command is not None:
+            run_repro(command, args.stage, args.workers, args.allow_dirty)
+        elif args.noise_diagnostic:
             run_noise_diagnostic(h=args.h, workers=args.workers,
                                  file_id=args.file_id)
         else:
