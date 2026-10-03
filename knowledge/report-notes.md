@@ -373,3 +373,32 @@ Decision lives in [decisions/calibration-constrained-fit](decisions/calibration-
 - [part2/results/phase_a_derived.json](../part2/results/phase_a_derived.json), [phase_a_jacobian_diagnostic.json](../part2/results/phase_a_jacobian_diagnostic.json), [phase_a_split_profile.json](../part2/results/phase_a_split_profile.json), [phase_a_tolerance_bounds.json](../part2/results/phase_a_tolerance_bounds.json).
 - [decisions/calibration-constrained-fit](decisions/calibration-constrained-fit.md) — Step 3 CIs annotated.
 - [concepts/least-squares-jacobian-confidence](concepts/least-squares-jacobian-confidence.md) — project note on step invariance.
+
+---
+
+## [2026-10-02] Part 2 Phase B0: the split is identifiable in the model, not from this data
+
+**Headline for the report.**
+> A synthetic-data check (§8) finds that the core/surface heat-capacity `split` is identifiable in the model but not from this data. Fitted to noise-free synthetic data generated from the locked central point, it is recovered exactly from every starting point; with white noise at the real noise level, the fits scatter as the Cramér–Rao bound predicts. The real residual is strongly autocorrelated, and its per-cycle offsets alone, and its shape alone, each drive the split to its 0.99 bound. A better-designed test input would not fix this: the limit is the structure of the model error, not a lack of excitation.
+
+**Setup** (§8.2). Synthetic data: the model at the locked central point (`split = 0.9283`, `R_cs = 3.394 K/W`) with the real heat input, cooling sink and initial conditions of the three calibration cycles, re-fitted with the same bounds [0.50, 0.99], start point (0.93) and stride (10) as §7.5's split-only fit, at tighter optimiser tolerances; G4 confirms that the two fits give the same result on the real data. Simulator: exact modal integration, within 8e-8 K of a tight `solve_ivp` reference. Four gates passed (reference agreement, bitwise determinism, step invariance, reproduction of §7.5's real-data fit at 1.3e-6 relative cost). The decision rules were written to the output JSON before any fit ran.
+
+**The three findings** (§8.1, §8.3).
+
+1. **Identifiable in the model.** Noise-free (T0): 0.9283 from all 5 starts, error ≤ 2.2e-14. White noise at σ = 0.559 K, the real residual's RMS (T1, 200 draws): mean 0.9216, sd 0.042 against a Cramér–Rao sd of 0.038; 7 % of fits at a bound, all at 0.99, against 5.4 % predicted. Fitting `split` and `R_cs` jointly gives the same picture: exact recovery from clean data and, under white noise, sd 0.043 for split and 0.31 K/W for `R_cs` (bound 0.32 K/W), with no `R_cs` fit at a bound.
+2. **Not identifiable from this data.** Autocorrelated noise of the same σ, integrated autocorrelation time 292 s as measured in §7.7 (T1b, 200 draws): mean 0.8501, sd 0.174; 36 % of fits at a bound (20.5 % at 0.99, 15.5 % at 0.50).
+3. **The real residual drives the split to the bound.** Offset only (T2), shape only (T3) and the full residual (T4, which reproduces the real data) each land at 0.99. The per-cycle means (+0.94 K US06, −0.28 K LA92, −0.48 K UDDS) carry 86 % of the residual's mean square; the remaining shape has an RMS of 0.21 K. (§7.7's 81 % is a single mean over US06 alone.)
+
+**Caveat** (§8.4). This does not, on its own, show that the real residual pulls the split upward *systematically*: autocorrelated noise of the same size sent 20.5 % of fits to the 0.99 bound by chance, so one dataset landing there is not decisive. What tips the balance is physical. The bound corresponds to a surface heat capacity of 0.43 J/K, far below any plausible steel can (§7.5), and a residual dominated by per-cycle offsets and a slow 292 s mode (§7.7) is the signature of model error, not measurement noise.
+
+**Consequence for Phase B** (§8.5). Phase B, designing a test input that would identify the split or `R_cs`, is not pursued: published input-design work (Mendoza et al. 2017; Doosthosseini & Fathy 2020) sharpens the Fisher information of a model assumed exact, and here the binding constraint is model error. Recorded for future work, untested: if the residual were stationary noise with the measured autocorrelation, a generalised-least-squares fit would bound the split at sd 0.013 against the white-noise 0.038; any such estimate would remain model-conditional, with no core measurement to check it against. The labels and every ML result are unaffected: the `R_cs` band moves by about 1 % when the split is moved to its bound (§7.6).
+
+**Where in the writeup**: [report/part2_phase_b0.md](../report/part2_phase_b0.md) §8, linked from §7.5 of [report/part2_phase_a.md](../report/part2_phase_a.md) and from the closing "Part 2" section of `report/writeup.md`.
+
+**Cross-refs**:
+- [report/part2_phase_b0.md](../report/part2_phase_b0.md) — §8, the written record.
+- [part2/synthetic_identifiability.py](../part2/synthetic_identifiability.py) — the check (§8.6).
+- [part2/results/phase_b0_synthetic_identifiability.json](../part2/results/phase_b0_synthetic_identifiability.json) — every §8 number, the gates and the pre-registered rules.
+- [report/part2_phase_a.md](../report/part2_phase_a.md) — §7.5 (split bound-pinned), §7.7 (residual autocorrelation).
+- [sources/lin-2012-adaptive-observer](sources/lin-2012-adaptive-observer.md) — the same failure mode (Figs. 6–7).
+- [concepts/identifiability](concepts/identifiability.md)

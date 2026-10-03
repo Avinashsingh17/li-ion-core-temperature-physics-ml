@@ -175,3 +175,4 @@ The full pipeline, the locked `2026-06-18b` calibration, the figures, and the wo
 Part 1 left one parameter unidentified. Part 2 audits all four.
 [Part 2, Phase A: identifiability audit](part2_phase_a.md), which also
 corrects the parameter confidence intervals reported in Section 5.
+[Part 2, Phase B0: is the split unidentifiable, or is it the data?](part2_phase_b0.md), which finds the split identifiable in the model but not from this data.

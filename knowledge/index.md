@@ -7,6 +7,7 @@ See also:
 - [concept-map.md](concept-map.md) — learner-facing glossary of physics, ML, and data concepts in active use, cross-linked to where each appears in code & decisions.
 - [presentation-notes.md](presentation-notes.md) — plain-language, audience-facing weekly recaps for explaining the project. User-authored, filed verbatim.
 - [report/part2_phase_a.md](../report/part2_phase_a.md) — Part 2, Phase A identifiability audit (§7): corrects Part 1's thermal-parameter confidence intervals; `split` not identified; the `R_cs` band survives.
+- [report/part2_phase_b0.md](../report/part2_phase_b0.md) — Part 2, Phase B0 synthetic-data check (§8): the `split` is identifiable in the model, not from this data; the real residual drives it to its bound, and a better test input would not fix that.
 
 ## Sources
 

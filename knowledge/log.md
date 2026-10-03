@@ -279,3 +279,9 @@ Filed `sources/liu-2016-identifiability-to-control.md`. Electrochemical only (EC
 
 ## [2026-10-02] query | Literature PDFs moved to `part2/literature/` and git-ignored
 The six Part 2 literature PDFs were moved from `part2/` to `part2/literature/`. `part2/literature/` was added to `.gitignore` on line 21, after the existing `*.pdf` rule on line 20. Before the move, `git ls-files '*.pdf'` showed no tracked PDFs. `git check-ignore -v` now matches all six PDFs on `.gitignore:21`. The PDFs stay local; each source note records the filename and page count.
+
+## [2026-10-02] writeup | §8 Part 2 Phase B0 written and linked
+`report/part2_phase_b0.md` (§8): the Phase B0 write-up, every new number from `part2/results/phase_b0_synthetic_identifiability.json`. The split is identifiable in the model but not from this data, and the real residual drives it to its bound; Phase B is not pursued. Links: one sentence appended to the §7.5 paragraph "The locked `split` is noise-pinned…" in `report/part2_phase_a.md` (that paragraph re-wrapped); one line in the closing "Part 2" section of `report/writeup.md`; one "See also" line in `index.md`. Report-notes entry "[2026-10-02] Part 2 Phase B0: the split is identifiable in the model, not from this data".
+
+## [2026-10-02] ingest | Lin et al. 2012 note updated with the Phase B0 result
+`sources/lin-2012-adaptive-observer.md`, "Our reading": the last bullet ("…is what Phase B0 tests") now records the outcome. Pinning `C_total` makes the split structurally identifiable (exact recovery from noise-free synthetic data), but not from the real data, whose strongly autocorrelated residual drives it to its bound: the failure mode of the paper's Figs. 6–7.

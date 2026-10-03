@@ -52,7 +52,7 @@ Implied split `C_c/(C_c + C_s)` = 268/286.8 = 0.934.
 - This is the only Tier-1 paper that identifies `C_c` and `C_s` separately. It does so under noise-free simulation, with a model identical to the plant, and with a known, time-varying `R_u`.
 - Figs. 6–7 show the mechanism §7.5 infers: biased heat capacities and `R_c` that still fit `T_s` while corrupting `T_c`.
 - The implied split is 0.934.
-- The LG data has a constant chamber and no coolant-velocity channel, so the paper's route to `C_s` is unavailable to us. Whether pinning `C_total` can substitute for it is what Phase B0 tests.
+- The LG data has a constant chamber and no coolant-velocity channel, so the paper's route to `C_s` is unavailable to us. Phase B0 (§8) found that pinning `C_total` makes the split structurally identifiable: it is recovered exactly from noise-free synthetic data. It is not identifiable from the real data, whose strongly autocorrelated residual drives it to its bound. This is the same failure mode as this paper's Figs. 6–7.
 
 ## Related notes
 

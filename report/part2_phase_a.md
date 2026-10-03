@@ -244,7 +244,8 @@ signature of a parameter the data cannot constrain.
 Neither is an interior optimum, and `split` should not be described as a fitted
 quantity.** The locked values remain a defensible *prior* — a 93/7 split of a
 43.2 J/K total is reasonable from cell construction — but they are a prior the
-data neither confirmed nor refuted.
+data neither confirmed nor refuted. §8 tests whether this is a property of the
+model or of the data.
 
 One further detail worth recording: at the high band point the locked `split`
 is `0.9300000000000000`, identical to the initial guess to sixteen decimal
