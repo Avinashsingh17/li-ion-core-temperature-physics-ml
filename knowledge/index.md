@@ -13,6 +13,12 @@ See also:
 - [Lin et al. 2014 — Lumped-parameter electro-thermal model](sources/lin-2014-electro-thermal.md) — 5-state ECM + two-state thermal; decoupled parameterization; A123 26650 LFP reference numbers for `C_c, C_s, R_c, R_u`. Our thermal model is theirs.
 - [Lin et al. 2013 — Online parameterization & identifiability](sources/lin-2013-identifiability.md) — only 3 of 5 physical params identifiable from `T_s` alone; argues for pinning `C_c, C_s`; persistent-excitation test for cycle suitability.
 - [Zheng et al. 2025 — Physics-based synthetic data + ML](sources/zheng-2025-sim2real.md) — LSTM + UDA framework; data-fidelity-over-quantity; warns `k_t` (~ our `R_c`) is the hardest parameter to identify from surface signals.
+- [Lin et al. 2012 — Quadruple adaptive observer](sources/lin-2012-adaptive-observer.md) — the only Tier-1 paper that identifies `C_c` and `C_s` separately: noise-free simulation, a model identical to the plant, and a known time-varying `R_u`. Biased fits keep `T_s` and corrupt `T_c` (Figs. 6–7). Implied split 0.934.
+- [Richardson & Howey 2015 — Sensorless temperature estimation via impedance](sources/richardson-howey-2015-sensorless.md) — 1-D radial PA model with an EKF on 215 Hz impedance and a dual EKF for `h`. Uniform `ρc_p` (no split). Impedance is a candidate second channel for `R_cs`.
+- [Zou et al. 2017 — Electrothermal MPC charging](sources/zou-2017-electrothermal-mpc.md) — two-state thermal model + second-order ECM, with parameters pinned from Lin 2014 (implied split 0.933). Observability is checked for states, not parameters. For Phase C/D.
+- [Mendoza et al. 2017 — Combined thermal/electrochemical identifiability](sources/mendoza-2017-combined-identifiability.md) — `F = SᵀS/σ²`, D-optimal two-sine current, 500-run Monte Carlo; single thermal node (no split). Points to Forgez 2010 as the next read.
+- [Doosthosseini & Fathy 2020 — Optimal thermal-cycling input](sources/doosthosseini-2020-optimal-thermal-input.md) — Pontryagin structure of the chamber-temperature input that maximises information on `hA/mC_p`: switching arcs, and finite information on a bound. No split; LG cycles do not use this channel.
+- [Liu et al. 2016 — Identifiability-optimised testing → robust control](sources/liu-2016-identifiability-to-control.md) — CRB samples → Monte Carlo through a constrained charging policy → violation likelihood (Table IV). Electrochemical only; a template for Phase C.
 
 ## Concepts
 

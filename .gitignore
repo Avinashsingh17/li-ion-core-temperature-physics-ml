@@ -18,6 +18,7 @@ data/eda_plots/
 
 # ── Copyrighted source-paper PDFs — do not redistribute (the .md notes stay) ──
 *.pdf
+part2/literature/
 
 # ── Python / OS / editor ──
 __pycache__/
