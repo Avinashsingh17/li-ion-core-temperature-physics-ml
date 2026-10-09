@@ -285,3 +285,6 @@ The six Part 2 literature PDFs were moved from `part2/` to `part2/literature/`. 
 
 ## [2026-10-02] ingest | Lin et al. 2012 note updated with the Phase B0 result
 `sources/lin-2012-adaptive-observer.md`, "Our reading": the last bullet ("…is what Phase B0 tests") now records the outcome. Pinning `C_total` makes the split structurally identifiable (exact recovery from noise-free synthetic data), but not from the real data, whose strongly autocorrelated residual drives it to its bound: the failure mode of the paper's Figs. 6–7.
+
+## [2026-10-09] writeup | Part 1 writeup corrections flagged by the website build
+Two corrections to `report/writeup.md`. The closing "Part 2" line no longer claims parameter confidence intervals are reported in Section 5; no CI appears anywhere in writeup.md, and the line now points to the calibration files. The §4a 0 °C Margin cell was labeled as a margin but held the core−surface gap (`step6_validation_per_cycle[3].core_surface_gap_max_C` = 6.686, US06 @ 0 °C). It now shows the margin range −0.19 to −1.62 °C (`margin_vs_T_inf_C` / `margin_vs_nominal_C`: −0.188 / −0.684 LA92, −1.020 / −1.618 US06), and the 6.7 °C gap is stated separately in a prose paragraph after the table.

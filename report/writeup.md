@@ -83,9 +83,11 @@ The result splits cleanly into three regimes:
 |---|---|---|---|
 | 25 °C | In-regime | Beats both, including the strict `T_inf` dynamics test | +0.45 to +0.85 °C |
 | 10 °C | Inconclusive | Excursion too small to separate model from baselines | — |
-| 0 °C | Out-of-regime | Loses; over-predicts heat accumulation | up to ~6.7 °C gap |
+| 0 °C | Out-of-regime | Loses; over-predicts heat accumulation | −0.19 to −1.62 °C |
 
 (Figure 3 carries the per-cycle and per-baseline detail; the table summarizes by regime.)
+
+At 0 °C the model's predicted core-to-surface gap also reaches 6.7 °C on US06, implausibly large against the literature — another sign the model is outside the regime it was calibrated for.
 
 This is the empirical justification for scoping the core-temperature labels to 25 °C only. The model earns its keep in the regime it was calibrated for and degrades honestly outside it; I'd rather state that boundary than quietly average over it.
 
@@ -174,5 +176,5 @@ The full pipeline, the locked `2026-06-18b` calibration, the figures, and the wo
 
 Part 1 left one parameter unidentified. Part 2 audits all four.
 [Part 2, Phase A: identifiability audit](part2_phase_a.md), which also
-corrects the parameter confidence intervals reported in Section 5.
+corrects the fitted-parameter confidence intervals recorded in the project's calibration files (they are not quoted in this write-up).
 [Part 2, Phase B0: is the split unidentifiable, or is it the data?](part2_phase_b0.md), which finds the split identifiable in the model but not from this data.
